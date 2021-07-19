@@ -9,6 +9,7 @@ import Header from './components/Header';
 import Wrapper from './components/Wrapper';
 // import NowWhat from './components/NowWhat';
 import Chart from './components/Chart';
+import Data from './components/Data';
 
 const store = createStore();
 const theme = createMuiTheme({
@@ -31,7 +32,7 @@ const App = () => (
     <Provider store={store}>
       <Wrapper>
         <Header />
-        <Chart />
+        <Data />
         <ToastContainer />
       </Wrapper>
     </Provider>
