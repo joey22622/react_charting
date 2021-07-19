@@ -1,6 +1,8 @@
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Provider, createClient, useQuery } from 'urql';
+import { Provider, createClient, useQuery, useSubscription } from 'urql';
+import { SettingsSystemDaydreamOutlined, Timer } from '@material-ui/icons';
 
 const client = createClient({
     url: 'https://react.eogresources.com/graphql',
@@ -12,21 +14,18 @@ const useStyles = makeStyles({
         backgroundColor: 'green'
     },
 });
+
 const query = `
-query{
-    getMeasurements(
-    input: {
-        metricName:"oilTemp"
-        before:1626664014782
-        after: 1626662214782
-    }){
+query ($metricInfo: MeasurementQuery){
+    heartBeat
+    getMeasurements(input: $metricInfo){
         metric
         at
         value
         unit
     }
 }
-    `
+`
 
 
 export default () => {
@@ -39,14 +38,48 @@ export default () => {
 
 const Chart: React.FC = ({ children }) => {
     const classes = useStyles();
-    const [result] = useQuery({
-        query
+    const [range, setRange] = useState({
+        before: 0,
+        after: 0,
+    })
+    const metricInfo = {
+        metricName: "oilTemp",
+        before: range.before,
+        after: range.after
+    }
+    const [result, reexecuteQuery] = useQuery({
+        query,
+        variables: {
+            metricInfo
+        }
     });
     const { fetching, data, error } = result;
-    if (!fetching) {
-        console.log('MEASUREMENTS', result)
+    const updateRange = () => {
+        reexecuteQuery({ requestPolicy: 'network-only' })
+        if (!fetching) {
+            console.log('Range Updated', result.data)
+            const range = {
+                before: data.heartBeat,
+                after: data.heartBeat - 1800000
+            }
+            setRange(range)
+            console.log(range)
+        }
     }
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            updateRange()
+        }, 60000)
+        return () => {
+            clearInterval(timer)
+        }
+    })
+
+
     return (
-        <div className={classes.chart}>{children}</div>
+        <div className={classes.chart}>
+            <button onClick={() => updateRange()}>click me</button>
+        </div>
     )
 };
