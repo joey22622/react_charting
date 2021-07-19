@@ -1,13 +1,11 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Provider, createClient, useQuery, useSubscription } from 'urql';
+import { Provider, createClient, useQuery } from 'urql';
 import { SettingsSystemDaydreamOutlined, Timer } from '@material-ui/icons';
 import { LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
+import { Metric, MetricRow } from '../interfaces'
 
-const client = createClient({
-    url: 'https://react.eogresources.com/graphql',
-});
 const useStyles = makeStyles({
     chart: {
         height: '1000px',
@@ -28,24 +26,17 @@ query ($metricInfo: MeasurementQuery){
 `
 
 
-export default () => {
-    return (
-        <Provider value={client}>
-            <Chart />
-        </Provider>
-    )
-};
+interface Props {
+    metrics: Metric[],
+}
 
-const Chart: React.FC = ({ children }) => {
+const Chart: React.FC<Props> = ({ metrics, children }) => {
     const classes = useStyles();
     const [range, setRange] = useState({
         before: 0,
         after: 0,
     })
-    interface MetricRow {
-        "oilTemp": number
-        at: number
-    }
+
     const [metricData, setMetricData] = useState<MetricRow[]>([
         { "oilTemp": 272.62, at: 1626682678202 },
         { "oilTemp": 279.94, at: 1626682679502 },
@@ -55,8 +46,8 @@ const Chart: React.FC = ({ children }) => {
 
     const formatMetricData = (data: { metric: string, at: number, value: number }[]): MetricRow[] => {
         let newData: MetricRow[] = []
-        console.log('formatMetricData')
-        console.log(data)
+        // console.log('formatMetricData')
+        // console.log(data)
         let counter: number = 0;
         data.forEach(row => {
             if (counter === 10) {
@@ -68,7 +59,7 @@ const Chart: React.FC = ({ children }) => {
             }
             counter++
         })
-        console.log(newData)
+        // console.log(newData)
         return newData
     }
     const metricInfo = {
@@ -86,19 +77,17 @@ const Chart: React.FC = ({ children }) => {
     const updateRange = () => {
         reexecuteQuery({ requestPolicy: 'network-only' })
         if (!fetching) {
-            console.log('Range Updated', result.data)
+            // console.log('Range Updated', result.data)
             const range = {
                 before: data.heartBeat,
                 after: data.heartBeat - 1800000
             }
             setRange(range)
             setMetricData(formatMetricData(result.data.getMeasurements))
-            console.log(range)
+            // console.log(range)
         }
     }
-    useEffect(() => {
-        // formatMetricData(range)
-    }, [range])
+
     useEffect(() => {
         const timer = setInterval(() => {
             updateRange()
@@ -132,3 +121,4 @@ const Chart: React.FC = ({ children }) => {
     )
 };
 
+export default Chart
