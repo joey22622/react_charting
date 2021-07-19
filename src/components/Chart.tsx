@@ -12,7 +12,6 @@ const useStyles = makeStyles({
     chart: {
         height: '1000px',
         width: '1000px',
-        backgroundColor: 'green'
     },
 });
 
@@ -58,12 +57,16 @@ const Chart: React.FC = ({ children }) => {
         let newData: MetricRow[] = []
         console.log('formatMetricData')
         console.log(data)
-
+        let counter: number = 0;
         data.forEach(row => {
-            const value: number = row.value
-            const at: number = row.at
-            let dataRow: MetricRow = { 'oilTemp': value, at }
-            newData.unshift(dataRow)
+            if (counter === 10) {
+                const value: number = row.value
+                const at: number = row.at
+                let dataRow: MetricRow = { 'oilTemp': value, at }
+                newData.unshift(dataRow)
+                counter = 0
+            }
+            counter++
         })
         console.log(newData)
         return newData
@@ -116,14 +119,12 @@ const Chart: React.FC = ({ children }) => {
     return (
         <div className={classes.chart}>
             <button onClick={() => updateRange()}>click me</button>
-            <LineChart width={730} height={250} data={metricData}
+            <LineChart width={1000} height={600} data={metricData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                {/* <CartesianGrid strokeDasharray="3 3" /> */}
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="pv" stroke="#8884d8" />
                 <Line type="monotone" dataKey="oilTemp" stroke="#82ca9d" />
             </LineChart>
 
