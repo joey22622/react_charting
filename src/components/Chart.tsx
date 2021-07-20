@@ -20,20 +20,32 @@ const queryContent = `
 const query = `
 query ($metricInfo: MeasurementQuery){
     heartBeat
-    ${queryContent}
+    getMeasurements(input: $metricInfo){
+        metric
+        at
+        value
+    }
 }`
+const thirtyMin: number = 1800000
 
 interface Props {
     metrics: Metric[],
+    heartBeat: number
 }
 
-const Chart: React.FC<Props> = ({ metrics, children }) => {
+const Chart: React.FC<Props> = ({ metrics, heartBeat, children }) => {
     const classes = useStyles();
+
     const [range, setRange] = useState({
         before: 0,
         after: 0,
     })
-
+    useEffect(() => {
+        console.log('alsdfjalsdkf')
+        console.log(heartBeat)
+        reexecuteQuery({ requestPolicy: 'network-only' })
+        if (data) updateRange()
+    }, [heartBeat])
     // console.log(metrics)
     const [metricData, setMetricData] = useState<MetricRow[]>([
         { oilTemp: 272.62, at: 1626682678202 },
@@ -41,27 +53,38 @@ const Chart: React.FC<Props> = ({ metrics, children }) => {
         { oilTemp: 270.7, at: 1626682680804 },
     ])
 
-
     const formatMetricData = (data: { metric: string, at: number, value: number }[]): MetricRow[] => {
         let newData: MetricRow[] = []
         let counter: number = 0;
         data.forEach(row => {
-            if (counter === 10) {
+            if (counter === 0) {
                 const value: number = row.value
                 const at: number = row.at
                 let dataRow: MetricRow = { 'oilTemp': value, at }
                 newData.unshift(dataRow)
-                counter = 0
+                // counter = 0
             }
-            counter++
+            // counter++
         })
         return newData
     }
-    const metricInfo = {
-        metricName: metrics[0] || "oilTemp",
-        before: range.before,
-        after: range.after
+
+    const updateRange = () => {
+        const range = {
+            before: data.heartBeat,
+            after: data.heartBeat
+        }
+        setRange(range)
+        setMetricData(formatMetricData(result.data.getMeasurements))
     }
+
+    // GRAPHQL
+    const metricInfo = {
+        metricName: "oilTemp",
+        before: heartBeat,
+        after: heartBeat >= thirtyMin ? heartBeat - thirtyMin : 0
+    }
+
     const [result, reexecuteQuery] = useQuery({
         query,
         variables: {
@@ -69,33 +92,12 @@ const Chart: React.FC<Props> = ({ metrics, children }) => {
         }
     });
     const { fetching, data, error } = result;
-    const updateRange = () => {
+    const reRunQuery = () => {
+        console.log(`re-running query`);
         reexecuteQuery({ requestPolicy: 'network-only' })
-        console.log('asdfasdfasdf')
-        if (data) {
-            const range = {
-                before: data.heartBeat,
-                after: data.heartBeat - 1800000
-            }
-            setRange(range)
-            setMetricData(formatMetricData(result.data.getMeasurements))
-        }
+        if (data) console.log(`data returned`);
+
     }
-    useEffect(() => {
-        console.log(result)
-        if (data) {
-            console.log('initialRender')
-            updateRange()
-        }
-    }, [])
-    useEffect(() => {
-        const timer = setInterval(() => {
-            updateRange()
-        }, 60000)
-        return () => {
-            clearInterval(timer)
-        }
-    })
 
     return (
         <div className={classes.chart}>
@@ -106,7 +108,7 @@ const Chart: React.FC<Props> = ({ metrics, children }) => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="oilTemp" stroke="#82ca9d" />
+                <Line type="monotone" dot={false} dataKey="oilTemp" stroke="#82ca9d" />
             </LineChart>
         </div>
     )
