@@ -1,38 +1,14 @@
 import * as React from 'react';
 import { useMemo, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { createClient, Provider, useQuery, useSubscription } from 'urql';
-// import { createClient, defaultExchanges, subscriptionExchange, Provider, Client, useQuery, useSubscription } from 'urql';
+import { createClient, Provider, useQuery } from 'urql';
 import Chart from './Chart'
 import { Metric } from '../interfaces'
 
-
+d
 const client = createClient({
     url: 'https://react.eogresources.com/graphql'
 })
-
-// const wsClient = createWSClient({
-//     url: 'ws://localhost/graphql',
-// });
-
-// const client = createClient({
-//     url: 'ws://react.eogresources.com/graphql',
-//     exchanges: [
-//         ...defaultExchanges,
-//         subscriptionExchange({
-//             forwardSubscription(operation) {
-//                 return {
-//                     subscribe: sink => {
-//                         const dispose = wsClient.subscribe(operation, sink);
-//                         return {
-//                             unsubscribe: dispose,
-//                         };
-//                     },
-//                 };
-//             },
-//         }),
-//     ],
-// });
 
 const useStyles = makeStyles({
     filterRow: {
@@ -48,17 +24,6 @@ query{
     getMetrics
 }
 `
-// const subscription = `
-//     subscription{
-//         newMeasurement{
-//             metric
-//             at
-//             value
-//         }
-//     }
-// `
-
-
 export default () => {
     return (
         <Provider value={client}>
@@ -86,20 +51,6 @@ const FilterRow: React.FC = ({ children }) => {
         // console.log(newState[i].active)
         setMetrics(newState)
     }
-    // TESTING SUBSCRIPTION
-    // interface Response {
-    //     newMessages: []
-    // }
-    // const handleSubscription = () => {
-    //     console.log('response')
-    //     console.log('response')
-    //     // return [response.newMessages, ...measurements];
-    // };
-    // const [res] = useSubscription({ query: subscription }, handleSubscription);
-    // console.log(res, 'aasdfasdf')
-    // TESTING SUBSCRIPTION END
-
-
 
     const [result] = useQuery({ query })
     const { fetching, data, error } = result;
