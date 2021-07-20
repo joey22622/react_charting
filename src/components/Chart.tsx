@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Provider, createClient, useQuery } from 'urql';
-import { SettingsSystemDaydreamOutlined, Timer } from '@material-ui/icons';
-import { LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
+import { useQuery } from 'urql';
+import { LineChart, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
 import { Metric, MetricRow } from '../interfaces'
 
 const useStyles = makeStyles({
@@ -12,19 +11,17 @@ const useStyles = makeStyles({
         width: '1000px',
     },
 });
-
-const query = `
-query ($metricInfo: MeasurementQuery){
-    heartBeat
+const queryContent = `
     getMeasurements(input: $metricInfo){
         metric
         at
         value
-        unit
-    }
-}
-`
-
+    }`
+const query = `
+query ($metricInfo: MeasurementQuery){
+    heartBeat
+    ${queryContent}
+}`
 
 interface Props {
     metrics: Metric[],
@@ -37,17 +34,16 @@ const Chart: React.FC<Props> = ({ metrics, children }) => {
         after: 0,
     })
 
+    // console.log(metrics)
     const [metricData, setMetricData] = useState<MetricRow[]>([
-        { "oilTemp": 272.62, at: 1626682678202 },
-        { "oilTemp": 279.94, at: 1626682679502 },
-        { "oilTemp": 270.7, at: 1626682680804 },
+        { oilTemp: 272.62, at: 1626682678202 },
+        { oilTemp: 279.94, at: 1626682679502 },
+        { oilTemp: 270.7, at: 1626682680804 },
     ])
 
 
     const formatMetricData = (data: { metric: string, at: number, value: number }[]): MetricRow[] => {
         let newData: MetricRow[] = []
-        // console.log('formatMetricData')
-        // console.log(data)
         let counter: number = 0;
         data.forEach(row => {
             if (counter === 10) {
@@ -59,11 +55,10 @@ const Chart: React.FC<Props> = ({ metrics, children }) => {
             }
             counter++
         })
-        // console.log(newData)
         return newData
     }
     const metricInfo = {
-        metricName: "oilTemp",
+        metricName: metrics[0] || "oilTemp",
         before: range.before,
         after: range.after
     }
@@ -76,18 +71,23 @@ const Chart: React.FC<Props> = ({ metrics, children }) => {
     const { fetching, data, error } = result;
     const updateRange = () => {
         reexecuteQuery({ requestPolicy: 'network-only' })
-        if (!fetching) {
-            // console.log('Range Updated', result.data)
+        console.log('asdfasdfasdf')
+        if (data) {
             const range = {
                 before: data.heartBeat,
                 after: data.heartBeat - 1800000
             }
             setRange(range)
             setMetricData(formatMetricData(result.data.getMeasurements))
-            // console.log(range)
         }
     }
-
+    useEffect(() => {
+        console.log(result)
+        if (data) {
+            console.log('initialRender')
+            updateRange()
+        }
+    }, [])
     useEffect(() => {
         const timer = setInterval(() => {
             updateRange()
@@ -96,14 +96,6 @@ const Chart: React.FC<Props> = ({ metrics, children }) => {
             clearInterval(timer)
         }
     })
-    const stuff = [
-        {
-            "name": "Page G",
-            "oilTemp": 3490,
-            "pv": 4300,
-            "amt": 2100
-        }
-    ]
 
     return (
         <div className={classes.chart}>
@@ -116,7 +108,6 @@ const Chart: React.FC<Props> = ({ metrics, children }) => {
                 <Legend />
                 <Line type="monotone" dataKey="oilTemp" stroke="#82ca9d" />
             </LineChart>
-
         </div>
     )
 };

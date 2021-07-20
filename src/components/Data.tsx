@@ -1,16 +1,39 @@
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Provider, createClient, useQuery, useSubscription } from 'urql';
-import { SettingsSystemDaydreamOutlined, Timer } from '@material-ui/icons';
-import { LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
+import { createClient, Provider, useQuery, useSubscription } from 'urql';
+// import { createClient, defaultExchanges, subscriptionExchange, Provider, Client, useQuery, useSubscription } from 'urql';
 import Chart from './Chart'
 import { Metric } from '../interfaces'
 
 
 const client = createClient({
-    url: 'https://react.eogresources.com/graphql',
-});
+    url: 'https://react.eogresources.com/graphql'
+})
+
+// const wsClient = createWSClient({
+//     url: 'ws://localhost/graphql',
+// });
+
+// const client = createClient({
+//     url: 'ws://react.eogresources.com/graphql',
+//     exchanges: [
+//         ...defaultExchanges,
+//         subscriptionExchange({
+//             forwardSubscription(operation) {
+//                 return {
+//                     subscribe: sink => {
+//                         const dispose = wsClient.subscribe(operation, sink);
+//                         return {
+//                             unsubscribe: dispose,
+//                         };
+//                     },
+//                 };
+//             },
+//         }),
+//     ],
+// });
+
 const useStyles = makeStyles({
     filterRow: {
         height: '100px',
@@ -21,9 +44,19 @@ const useStyles = makeStyles({
 
 const query = `
 query{
+    getHeartbeat
     getMetrics
 }
 `
+// const subscription = `
+//     subscription{
+//         newMeasurement{
+//             metric
+//             at
+//             value
+//         }
+//     }
+// `
 
 
 export default () => {
@@ -50,17 +83,28 @@ const FilterRow: React.FC = ({ children }) => {
     const toggleMetric = (i: number) => {
         let newState = [...metrics]
         newState[i].active = true
-        console.log(newState[i].active)
+        // console.log(newState[i].active)
         setMetrics(newState)
     }
-    const hi = () => {
-        console.log('HI')
-    }
+    // TESTING SUBSCRIPTION
+    // interface Response {
+    //     newMessages: []
+    // }
+    // const handleSubscription = () => {
+    //     console.log('response')
+    //     console.log('response')
+    //     // return [response.newMessages, ...measurements];
+    // };
+    // const [res] = useSubscription({ query: subscription }, handleSubscription);
+    // console.log(res, 'aasdfasdf')
+    // TESTING SUBSCRIPTION END
+
+
+
     const [result] = useQuery({ query })
     const { fetching, data, error } = result;
     useMemo(() => {
         if (!fetching) {
-            console.log(data.getMetrics)
             setMetrics(handleMetrics(data.getMetrics))
         }
     }, [data])
@@ -76,7 +120,7 @@ const FilterRow: React.FC = ({ children }) => {
                     })}
                 </ul>
             </div>
-            <Chart metrics={metrics} />
+            <Chart metrics={metrics.filter(metric => metric.active)} />
         </>
     )
 };

@@ -3,6 +3,11 @@ export interface Metric {
     active: boolean
 }
 export interface MetricRow {
-    "oilTemp": number
+    "oilTemp"?: number
+    "tubingPressure"?: number
+    "waterTemp"?: number
+    "casingPressure"?: number
+    "injValveOpen"?: number
+    "flareTemp"?: number
     at: number
 }
