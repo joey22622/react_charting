@@ -45,3 +45,18 @@ query{
     }
 }
     `
+
+const variableConstructor = () => {
+  let arr = []
+  metrics.forEach(metric => {
+    let variable: MetricVariable = {
+      metricName: metric,
+      before: heartBeat,
+      after: heartBeat >= thirtyMin ? heartBeat - thirtyMin : 0,
+    }
+    // Why????
+    // @ts-ignore
+    variables[metric] = variable
+  })
+  console.log(variables)
+}

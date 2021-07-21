@@ -11,3 +11,20 @@ export interface MetricRow {
     "flareTemp"?: number
     at: number
 }
+export interface MetricVariable {
+    metricName: string,
+    before: number,
+    after: Number
+}
+export interface MetricVariables {
+    "oilTemp"?: MetricVariable
+    "tubingPressure"?: MetricVariable
+    "waterTemp"?: MetricVariable
+    "casingPressure"?: MetricVariable
+    "injValveOpen"?: MetricVariable
+    "flareTemp"?: MetricVariable
+}
+
+export interface MetricD {
+
+}

@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { createClient, Provider, useQuery } from 'urql';
+import { ApolloClient, InMemoryCache, ApolloProvider, useQuery as apUseQuery, gql } from '@apollo/client';
 import Chart from './Chart'
 import { Metric } from '../interfaces'
 
-const client = createClient({
-    url: 'https://react.eogresources.com/graphql'
+const client = new ApolloClient({
+    uri: 'https://react.eogresources.com/graphql',
+    cache: new InMemoryCache(),
 })
 
 const useStyles = makeStyles({
@@ -19,7 +20,7 @@ const useStyles = makeStyles({
         cursor: 'pointer'
     }
 });
-const query = `
+const query = gql`
 query{
    getMetrics
     heartBeat
@@ -27,9 +28,9 @@ query{
 `
 export default () => {
     return (
-        <Provider value={client}>
+        <ApolloProvider client={client}>
             <FilterRow />
-        </Provider>
+        </ApolloProvider>
     )
 };
 const FilterRow: React.FC = ({ children }) => {
@@ -37,15 +38,13 @@ const FilterRow: React.FC = ({ children }) => {
 
     //GRAPHQL
     const reRunQuery = () => {
-        reexecuteQuery({ requestPolicy: 'network-only' })
+        refetch()
         if (data) {
             if (data.heartBeat) setHeartBeat(data.heartBeat)
             console.log(data)
         }
     }
-    const [result, reexecuteQuery] = useQuery({ query })
-    const { fetching, data, error } = result;
-
+    const { loading, error, data, refetch, networkStatus } = apUseQuery(query)
 
     // STATES
     const [heartBeat, setHeartBeat] = useState<number>(0)
@@ -73,7 +72,9 @@ const FilterRow: React.FC = ({ children }) => {
     }, [data])
 
     // CALLBACKS
-    const handleMetrics = (data: string[]): Metric[] => {
+    const handleMetrics = (input: string[]): Metric[] => {
+        // console.log(input)
+        const data: string[] = [...input]
         let result: Metric[] = []
         data.reverse().map((name, i) => {
             let metric: Metric = {
@@ -88,15 +89,15 @@ const FilterRow: React.FC = ({ children }) => {
     const toggleMetric = (i: number) => {
         let newState = [...metrics]
         newState[i].active = !newState[i].active
-        console.log(newState)
+        // console.log(newState)
         setMetrics(newState)
         reRunQuery()
     }
+
     return (
         <>
             <div className={classes.filterRow}>
                 <button onClick={() => reRunQuery()}>click me</button>
-
                 <ul>
                     {metrics.map((metric, i) => {
                         return (
@@ -105,7 +106,8 @@ const FilterRow: React.FC = ({ children }) => {
                     })}
                 </ul>
             </div>
-            <Chart heartBeat={heartBeat} metrics={metrics.filter(metric => metric.active)} />
+
+            <Chart heartBeat={heartBeat} metricObjs={metrics.filter(metric => metric.active)} />
         </>
     )
 };
