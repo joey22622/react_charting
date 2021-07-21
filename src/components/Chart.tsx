@@ -62,7 +62,11 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         }
         dataArr[0].forEach((col, i) => {
             const value: number = col.value
-            const at: number = col.at
+            // const at: number = col.at
+            const time = (i + 1) / (dataArr[0].length) * 30
+            const minute = Math.round(time)
+            const seconds: number = minute % 1 * 60
+            const at: string = minute + ':' + seconds
             let metricValues = {}
             dataArr.forEach((row, j) => {
                 let value = dataArr[j][i].value
@@ -105,7 +109,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         <ResponsiveContainer>
             <LineChart data={metricData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <XAxis dataKey={'at'} unit='minutes'><Label></Label></XAxis>
+                <XAxis dataKey={'at'} tickCount={15}></XAxis>
                 {metrics.map(metric => (
                     <YAxis dataKey={metric} />
                 ))}

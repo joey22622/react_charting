@@ -9,7 +9,7 @@ export interface MetricRow {
     "casingPressure"?: number
     "injValveOpen"?: number
     "flareTemp"?: number
-    at: number
+    at: string
 }
 export interface GqlMetricRow {
     metric: string,
