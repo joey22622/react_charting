@@ -1,17 +1,8 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { useQuery, gql, QueryResult } from '@apollo/client';
-import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, Label, ResponsiveContainer } from 'recharts';
+import { useQuery, gql } from '@apollo/client';
+import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } from 'recharts';
 import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow } from '../interfaces'
-import { configureStore } from 'redux-starter-kit';
-
-const useStyles = makeStyles({
-    chart: {
-        height: '600px',
-        width: '1000px',
-    },
-});
 
 const thirtyMin: number = 1800000
 
@@ -22,14 +13,9 @@ interface Props {
 
 const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     const metrics: string[] = metricObjs.map(metric => metric.name)
-    const classes = useStyles();
     let query = gql`query{heartBeat}`
 
     const [metricData, setMetricData] = useState<MetricRow[] | []>([])
-
-    useEffect(() => {
-    }, [heartBeat])
-
 
     // GRAPHQL
     const buildGql = () => {
@@ -61,8 +47,6 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             dataArr.push(data[col])
         }
         dataArr[0].forEach((col, i) => {
-            const value: number = col.value
-            // const at: number = col.at
             const time = (i + 1) / (dataArr[0].length) * 30
             const minute = Math.round(time)
             const seconds: number = minute % 1 * 60
@@ -85,7 +69,6 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     }
     const input: MetricVariables | {} = {}
     const buildVariables = () => {
-        let arr = []
         metrics.forEach(metric => {
             let variable: MetricVariable = {
                 metricName: metric,
@@ -110,8 +93,8 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             <LineChart data={metricData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <XAxis dataKey={'at'} tickCount={15}></XAxis>
-                {metrics.map(metric => (
-                    <YAxis dataKey={metric} />
+                {metrics.map((metric, i) => (
+                    <YAxis key={i} dataKey={metric} />
                 ))}
                 <Tooltip />
                 <Legend />

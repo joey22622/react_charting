@@ -1,14 +1,12 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import Container from '@material-ui/core/Container';
-import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import { makeStyles } from '@material-ui/core/styles';
 import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from '@apollo/client';
 import Chart from './Chart'
 import FilterRow from './FilterRow'
 import { Metric } from '../interfaces'
-import Button from '@material-ui/core/Button';
 
 
 const client = new ApolloClient({
@@ -22,26 +20,8 @@ const useStyles = makeStyles({
     },
     chart: {
         height: '500px',
-        // background: 'green'
     },
-    filterRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap'
-    },
-    button: {
-        background: 'rgba(0,0,0,.2)',
-        flexGrow: 1,
-        margin: '1rem .5rem',
-        transition: '.2s',
-        color: 'white',
-        padding: '.5rem 1rem',
-        textTransform: 'none'
-    }
 });
-const fluidHeight = {
-    height: '100%'
-}
 const query = gql`
 query{
    getMetrics
@@ -65,7 +45,7 @@ const Data: React.FC = ({ children }) => {
             if (data.heartBeat) setHeartBeat(data.heartBeat)
         }
     }
-    const { loading, error, data, refetch, networkStatus } = useQuery(query)
+    const { data, refetch } = useQuery(query)
 
     // STATES
     const [heartBeat, setHeartBeat] = useState<number>(0)
@@ -112,27 +92,10 @@ const Data: React.FC = ({ children }) => {
 
     return (
         <Container className={classes.content} >
-            {/* <Grid container>
-                <Grid style={fluidHeight} item xs={12}> */}
-            {/* <Paper> */}
             <FilterRow heartBeat={heartBeat} metrics={metrics} toggleMetric={toggleMetric}></FilterRow>
-            {/* <div className={classes.filterRow}>
-                {metrics.map((metric, i) => {
-                    return (
-                        <Button className={classes.button} onClick={() => toggleMetric(i)} key={i}>
-                            {metric.name}
-                        </Button>
-                    )
-                })}
-            </div> */}
-            {/* </Paper> */}
-            {/* </Grid> */}
-            {/* <Grid className={classes.chart} item xs={12}> */}
             <Paper className={classes.chart}>
                 <Chart heartBeat={heartBeat} metricObjs={metrics.filter(metric => metric.active)} />
             </Paper>
-            {/* </Grid> */}
-            {/* </Grid> */}
         </Container >
     )
 };
