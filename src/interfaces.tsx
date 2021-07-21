@@ -11,6 +11,19 @@ export interface MetricRow {
     "flareTemp"?: number
     at: number
 }
+export interface GqlMetricRow {
+    metric: string,
+    at: number,
+    value: number
+}
+export interface GqlMetricData {
+    "oilTemp"?: GqlMetricRow[]
+    "tubingPressure"?: GqlMetricRow[]
+    "waterTemp"?: GqlMetricRow[]
+    "casingPressure"?: GqlMetricRow[]
+    "injValveOpen"?: GqlMetricRow[]
+    "flareTemp"?: GqlMetricRow[]
+}
 export interface MetricVariable {
     metricName: string,
     before: number,

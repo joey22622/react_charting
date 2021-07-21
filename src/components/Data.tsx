@@ -53,8 +53,8 @@ const FilterRow: React.FC = ({ children }) => {
     // HOOKS
     useEffect(() => {
         const timer = setInterval(() => {
-
-        }, 60000)
+            reRunQuery()
+        }, 3000)
         return () => {
             clearInterval(timer)
         }
