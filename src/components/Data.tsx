@@ -1,9 +1,15 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
+import Container from '@material-ui/core/Container';
+import Grid from '@material-ui/core/Grid';
+import Paper from '@material-ui/core/Paper';
 import { makeStyles } from '@material-ui/core/styles';
-import { ApolloClient, InMemoryCache, ApolloProvider, useQuery as apUseQuery, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from '@apollo/client';
 import Chart from './Chart'
+import FilterRow from './FilterRow'
 import { Metric } from '../interfaces'
+import Button from '@material-ui/core/Button';
+
 
 const client = new ApolloClient({
     uri: 'https://react.eogresources.com/graphql',
@@ -11,15 +17,31 @@ const client = new ApolloClient({
 })
 
 const useStyles = makeStyles({
+    content: {
+        height: '100%'
+    },
+    chart: {
+        height: '500px',
+        // background: 'green'
+    },
     filterRow: {
-        height: '100px',
-        width: '1000px',
-        background: 'rgba(0,0,0,.6)'
+        display: 'flex',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap'
     },
     button: {
-        cursor: 'pointer'
+        background: 'rgba(0,0,0,.2)',
+        flexGrow: 1,
+        margin: '1rem .5rem',
+        transition: '.2s',
+        color: 'white',
+        padding: '.5rem 1rem',
+        textTransform: 'none'
     }
 });
+const fluidHeight = {
+    height: '100%'
+}
 const query = gql`
 query{
    getMetrics
@@ -29,11 +51,11 @@ query{
 export default () => {
     return (
         <ApolloProvider client={client}>
-            <FilterRow />
+            <Data />
         </ApolloProvider>
     )
 };
-const FilterRow: React.FC = ({ children }) => {
+const Data: React.FC = ({ children }) => {
     const classes = useStyles();
 
     //GRAPHQL
@@ -41,10 +63,9 @@ const FilterRow: React.FC = ({ children }) => {
         refetch()
         if (data) {
             if (data.heartBeat) setHeartBeat(data.heartBeat)
-            console.log(data)
         }
     }
-    const { loading, error, data, refetch, networkStatus } = apUseQuery(query)
+    const { loading, error, data, refetch, networkStatus } = useQuery(query)
 
     // STATES
     const [heartBeat, setHeartBeat] = useState<number>(0)
@@ -60,12 +81,10 @@ const FilterRow: React.FC = ({ children }) => {
         }
     })
     useEffect(() => {
-        console.log('heartBeat', heartBeat)
     }, [heartBeat])
 
     useEffect(() => {
         if (data) {
-            console.log('data')
             setHeartBeat(data.heartBeat)
             setMetrics(handleMetrics(data.getMetrics))
         }
@@ -73,7 +92,6 @@ const FilterRow: React.FC = ({ children }) => {
 
     // CALLBACKS
     const handleMetrics = (input: string[]): Metric[] => {
-        // console.log(input)
         const data: string[] = [...input]
         let result: Metric[] = []
         data.reverse().map((name, i) => {
@@ -83,32 +101,39 @@ const FilterRow: React.FC = ({ children }) => {
             }
             result.push(metric)
         })
-        console.log('handleMetrics')
         return result
     }
     const toggleMetric = (i: number) => {
         let newState = [...metrics]
         newState[i].active = !newState[i].active
-        // console.log(newState)
         setMetrics(newState)
         reRunQuery()
     }
 
     return (
-        <>
-            <div className={classes.filterRow}>
-                <button onClick={() => reRunQuery()}>click me</button>
-                <ul>
-                    {metrics.map((metric, i) => {
-                        return (
-                            <li className={classes.button} onClick={() => toggleMetric(i)} key={i}>{metric.name}, {metric.active ? 'true' : 'false'}</li>
-                        )
-                    })}
-                </ul>
-            </div>
-
-            <Chart heartBeat={heartBeat} metricObjs={metrics.filter(metric => metric.active)} />
-        </>
+        <Container className={classes.content} >
+            {/* <Grid container>
+                <Grid style={fluidHeight} item xs={12}> */}
+            {/* <Paper> */}
+            <FilterRow heartBeat={heartBeat} metrics={metrics} toggleMetric={toggleMetric}></FilterRow>
+            {/* <div className={classes.filterRow}>
+                {metrics.map((metric, i) => {
+                    return (
+                        <Button className={classes.button} onClick={() => toggleMetric(i)} key={i}>
+                            {metric.name}
+                        </Button>
+                    )
+                })}
+            </div> */}
+            {/* </Paper> */}
+            {/* </Grid> */}
+            {/* <Grid className={classes.chart} item xs={12}> */}
+            <Paper className={classes.chart}>
+                <Chart heartBeat={heartBeat} metricObjs={metrics.filter(metric => metric.active)} />
+            </Paper>
+            {/* </Grid> */}
+            {/* </Grid> */}
+        </Container >
     )
 };
 

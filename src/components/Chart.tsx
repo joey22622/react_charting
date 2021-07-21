@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { useQuery } from 'urql';
-import { useQuery as apUseQuery, gql, QueryResult } from '@apollo/client';
-import { LineChart, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
+import { useQuery, gql, QueryResult } from '@apollo/client';
+import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, Label, ResponsiveContainer } from 'recharts';
 import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow } from '../interfaces'
 import { configureStore } from 'redux-starter-kit';
 
@@ -26,16 +25,10 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     const classes = useStyles();
     let query = gql`query{heartBeat}`
 
-    const [metricD, setMetricD] = useState<MetricRow[] | []>([])
+    const [metricData, setMetricData] = useState<MetricRow[] | []>([])
 
     useEffect(() => {
     }, [heartBeat])
-    // console.log(metrics)
-    const [metricData, setMetricData] = useState<MetricRow[]>([
-        { oilTemp: 272.62, at: 1626682678202 },
-        { oilTemp: 279.94, at: 1626682679502 },
-        { oilTemp: 270.7, at: 1626682680804 },
-    ])
 
 
     // GRAPHQL
@@ -59,19 +52,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             query = gql`query{heartBeat}`
         }
     }
-    // const formatMetricData = (data: { metric: string, at: number, value: number }[]): MetricRow[] => {
-    //     let newData: MetricRow[] = []
-    //     let counter: number = 0;
-    //     data.forEach(row => {
-    //         if (counter === 0) {
-    //             const value: number = row.value
-    //             const at: number = row.at
-    //             let dataRow: MetricRow = { 'oilTemp': value, at }
-    //             newData.unshift(dataRow)
-    //         }
-    //     })
-    //     return newData
-    // }
+
     // @ts-ignore
     const buildMetricData = (data: GqlMetricData): MetricRow[] => {
         const chartData: MetricRow[] = []
@@ -79,7 +60,6 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         for (const col in data) {
             dataArr.push(data[col])
         }
-        console.log(dataArr)
         dataArr[0].forEach((col, i) => {
             const value: number = col.value
             const at: number = col.at
@@ -97,8 +77,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             // @ts-ignore
             chartData.unshift(dataRow)
         })
-        setMetricD(chartData)
-        console.log(chartData)
+        setMetricData(chartData)
     }
     const input: MetricVariables | {} = {}
     const buildVariables = () => {
@@ -116,33 +95,27 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     }
     buildGql()
     buildVariables()
-    const res = apUseQuery(query, { variables: { ...input } })
-    if (res.data && !res.data.heartBeat) {
-        console.log('adsfadfqrasgf')
-        console.log(res.data)
-        // buildMetricData(res.data)
-    }
+    const res = useQuery(query, { variables: { ...input } })
     useEffect(() => {
         if (res.data && !res.data.heartBeat) {
             buildMetricData(res.data)
         }
     }, [res.data])
     return (
-        <div className={classes.chart}>
-            <button>click me</button>
-            <LineChart width={1000} height={300} data={metricD}
+        <ResponsiveContainer>
+            <LineChart data={metricData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <XAxis dataKey="name" />
+                <XAxis dataKey={'at'} unit='minutes'><Label></Label></XAxis>
                 {metrics.map(metric => (
                     <YAxis dataKey={metric} />
                 ))}
                 <Tooltip />
                 <Legend />
-                {metrics.map(metric => (
-                    <Line type="monotone" dot={false} dataKey={metric} stroke="#82ca9d" />
+                {metrics.map((metric, i) => (
+                    <Line key={i} type="monotone" dot={false} dataKey={metric} stroke="#82ca9d" />
                 ))}
             </LineChart>
-        </div>
+        </ResponsiveContainer>
     )
 };
 
