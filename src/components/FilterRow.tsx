@@ -46,6 +46,14 @@ interface Props {
 const FilterRow: React.FC<Props> = ({ heartBeat, metrics, children, toggleMetric }) => {
     const classes = useStyles();
 
+    const query = gql`
+        query{
+        getMetrics
+            heartBeat
+        }
+    `
+
+
     return (
         <div className={classes.filterRow}>
             {metrics.map((metric, i) => {
