@@ -1,6 +1,8 @@
 export interface Metric {
-    name: string,
+    id: number
+    name: string
     active: boolean
+    unit: string
 }
 export interface MetricRow {
     "oilTemp"?: number
@@ -10,11 +12,21 @@ export interface MetricRow {
     "injValveOpen"?: number
     "flareTemp"?: number
     at: string
+    id: number
 }
 export interface GqlMetricRow {
+    __typename?: string
     metric: string,
     at: number,
     value: number
+}
+export interface GqlLastMetricRow {
+    "oilTemp"?: GqlMetricRow
+    "tubingPressure"?: GqlMetricRow
+    "waterTemp"?: GqlMetricRow
+    "casingPressure"?: GqlMetricRow
+    "injValveOpen"?: GqlMetricRow
+    "flareTemp"?: GqlMetricRow
 }
 export interface GqlMetricData {
     "oilTemp"?: GqlMetricRow[]
@@ -30,14 +42,10 @@ export interface MetricVariable {
     after: Number
 }
 export interface MetricVariables {
-    "oilTemp"?: MetricVariable
-    "tubingPressure"?: MetricVariable
-    "waterTemp"?: MetricVariable
-    "casingPressure"?: MetricVariable
-    "injValveOpen"?: MetricVariable
-    "flareTemp"?: MetricVariable
-}
-
-export interface MetricD {
-
+    "oilTemp"?: MetricVariable | string
+    "tubingPressure"?: MetricVariable | string
+    "waterTemp"?: MetricVariable | string
+    "casingPressure"?: MetricVariable | string
+    "injValveOpen"?: MetricVariable | string
+    "flareTemp"?: MetricVariable | string
 }

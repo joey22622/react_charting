@@ -25,7 +25,6 @@ const useStyles = makeStyles({
 const query = gql`
 query{
    getMetrics
-    heartBeat
 }
 `
 export default () => {
@@ -38,37 +37,19 @@ export default () => {
 const Data: React.FC = ({ children }) => {
     const classes = useStyles();
 
-    //GRAPHQL
-    const reRunQuery = () => {
-        refetch()
-        if (data) {
-            if (data.heartBeat) setHeartBeat(data.heartBeat)
-        }
-    }
-    const { data, refetch } = useQuery(query)
-
     // STATES
-    const [heartBeat, setHeartBeat] = useState<number>(0)
+    const [heartBeat, setHeartBeat] = useState<number>(Date.now())
     const [metrics, setMetrics] = useState<Metric[]>([])
 
     // HOOKS
     useEffect(() => {
         const timer = setInterval(() => {
-            reRunQuery()
+            setHeartBeat(Date.now())
         }, 3000)
         return () => {
             clearInterval(timer)
         }
     })
-    useEffect(() => {
-    }, [heartBeat])
-
-    useEffect(() => {
-        if (data) {
-            setHeartBeat(data.heartBeat)
-            setMetrics(handleMetrics(data.getMetrics))
-        }
-    }, [data])
 
     // CALLBACKS
     const handleMetrics = (input: string[]): Metric[] => {
@@ -76,8 +57,10 @@ const Data: React.FC = ({ children }) => {
         let result: Metric[] = []
         data.reverse().map((name, i) => {
             let metric: Metric = {
+                id: i,
                 name,
-                active: metrics[i] ? metrics[i].active : false
+                active: metrics[i] ? metrics[i].active : false,
+                unit: ''
             }
             result.push(metric)
         })
@@ -87,16 +70,24 @@ const Data: React.FC = ({ children }) => {
         let newState = [...metrics]
         newState[i].active = !newState[i].active
         setMetrics(newState)
-        reRunQuery()
+    }
+
+    const { data } = useQuery(query)
+    useEffect(() => {
+        if (data) {
+            if (data.getMetrics) setMetrics(handleMetrics([...data.getMetrics]))
+        }
+    }, [data])
+    const LoadedChart = () => {
+
     }
 
     return (
         <Container className={classes.content} >
             <FilterRow heartBeat={heartBeat} metrics={metrics} toggleMetric={toggleMetric}></FilterRow>
             <Paper className={classes.chart}>
-                <Chart heartBeat={heartBeat} metricObjs={metrics.filter(metric => metric.active)} />
+                {metrics.length > 0 && <Chart heartBeat={heartBeat} metricObjs={metrics} />}
             </Paper>
         </Container >
     )
 };
-
