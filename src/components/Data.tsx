@@ -45,7 +45,7 @@ const Data: React.FC = ({ children }) => {
     useEffect(() => {
         const timer = setInterval(() => {
             setHeartBeat(Date.now())
-        }, 1299)
+        }, 3000)
         return () => {
             clearInterval(timer)
         }

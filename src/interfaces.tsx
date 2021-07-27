@@ -30,12 +30,12 @@ export interface MetricVariable {
     after: Number
 }
 export interface MetricVariables {
-    "oilTemp"?: MetricVariable
-    "tubingPressure"?: MetricVariable
-    "waterTemp"?: MetricVariable
-    "casingPressure"?: MetricVariable
-    "injValveOpen"?: MetricVariable
-    "flareTemp"?: MetricVariable
+    "oilTemp"?: MetricVariable | string
+    "tubingPressure"?: MetricVariable | string
+    "waterTemp"?: MetricVariable | string
+    "casingPressure"?: MetricVariable | string
+    "injValveOpen"?: MetricVariable | string
+    "flareTemp"?: MetricVariable | string
 }
 
 export interface MetricD {
