@@ -116,6 +116,12 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     // console.log(input)
     // console.log(buildGql());
     const res = useQuery(buildGql(), { variables: { ...input } })
+    const handleLineVisibility = (active: boolean, strokeColor: string) => {
+        if (!active) {
+            return 'rgba(255,255,255,0)'
+        }
+        return strokeColor
+    }
     useEffect(() => {
         console.log(res.data)
         if (res.data) {
@@ -143,7 +149,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <XAxis dataKey={'at'} tickCount={15}></XAxis>
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <YAxis key={i} dataKey={metric.name} />
+                    <YAxis key={i} dataKey={metric.name} stroke="#82ca9d" />
                 ))}
                 <Tooltip />
                 <Legend />

@@ -1,6 +1,8 @@
 export interface Metric {
-    name: string,
+    id: number
+    name: string
     active: boolean
+    unit: string
 }
 export interface MetricRow {
     "oilTemp"?: number
@@ -46,8 +48,4 @@ export interface MetricVariables {
     "casingPressure"?: MetricVariable | string
     "injValveOpen"?: MetricVariable | string
     "flareTemp"?: MetricVariable | string
-}
-
-export interface MetricD {
-
 }

@@ -57,8 +57,10 @@ const Data: React.FC = ({ children }) => {
         let result: Metric[] = []
         data.reverse().map((name, i) => {
             let metric: Metric = {
+                id: i,
                 name,
-                active: metrics[i] ? metrics[i].active : false
+                active: metrics[i] ? metrics[i].active : false,
+                unit: ''
             }
             result.push(metric)
         })
@@ -89,4 +91,3 @@ const Data: React.FC = ({ children }) => {
         </Container >
     )
 };
-
