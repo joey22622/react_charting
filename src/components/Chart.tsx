@@ -14,29 +14,33 @@ interface Props {
 const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     const metrics: string[] = metricObjs.map(metric => metric.name)
     let query = gql`query{heartBeat}`
+    let init = false
 
     const [metricData, setMetricData] = useState<MetricRow[] | []>([])
 
     // GRAPHQL
     const buildGql = () => {
-        if (metrics.length) {
-            let queryHead = `query(`
-            let queryContent = ``
-            metrics.forEach((metric, i) => {
-                queryHead += `$${metric}: MeasurementQuery, `
-                queryContent += `
+        // if (metrics.length) {
+        let queryHead = `query(`
+        let queryContent = ``
+        metrics.forEach((metric, i) => {
+            queryHead += `$${metric}: MeasurementQuery, `
+            queryContent += `
             ${metric}:getMeasurements(input: $${metric}){
                 metric
                 at
                 value
             }`
-            })
-            queryHead += `){`
-            query = gql`${queryHead} ${queryContent}
+        })
+        queryHead += `){`
+        query = gql`${queryHead} ${queryContent}
         }`
-        } else {
-            query = gql`query{heartBeat}`
-        }
+        // } else {
+        //     query = gql`query{heartBeat}`
+        // }
+    }
+    const initGql = () => {
+
     }
 
     // @ts-ignore
@@ -66,6 +70,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             chartData.unshift(dataRow)
         })
         setMetricData(chartData)
+        console.log(metricData)
     }
     const input: MetricVariables | {} = {}
     const buildVariables = () => {
