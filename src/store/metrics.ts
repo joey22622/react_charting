@@ -25,9 +25,9 @@ const slice = createSlice({
   reducers: {
     metricToggled: (metrics, action) => {
       //   @ts-ignore
-      const i = metrics.list.findIndex(metric => metric.id === action.payload.id)
+      const i = metrics.keys.findIndex(metric => metric.id === action.payload)
       //   @ts-ignore
-      metrics.list[i].id.active = !metrics.list[i].id.active
+      metrics.keys[i].active = !metrics.keys[i].active
     },
     metricKeysAdded: (metrics, action: PayloadAction<Metric[]>) => {
       metrics.keys = action.payload

@@ -21,8 +21,8 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     // @ts-ignore
     // console.log(metricD)
 
-    // const metricData: MetricRow[] = useSelector(getMetricData)
-    const [metricData, setMetricData] = useState<MetricRow[] | []>([])
+    const metricData: MetricRow[] = useSelector(getMetricData)
+    // const [metricData, setMetricData] = useState<MetricRow[] | []>([])
 
     // GRAPHQL
     const buildGql = () => {
@@ -157,7 +157,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             }
 
         }
-    }, [res.data])
+    }, [heartBeat])
     // useEffect(() => {
     //     console.log(metricData.length)
     //     if (metricData.length > 0) {

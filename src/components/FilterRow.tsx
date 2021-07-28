@@ -39,7 +39,7 @@ interface Props {
 }
 
 const FilterRow: React.FC<Props> = ({ heartBeat, metricKeys, children, toggleMetric }) => {
-    const [latestValues, setLatestValues] = useState({})
+    // const [latestValues, setLatestValues] = useState({})
     const classes = useStyles();
     //     let query = gql`query{
     //    getLastKnownMeasurement(metricName:"oilTemp"){
@@ -73,25 +73,24 @@ const FilterRow: React.FC<Props> = ({ heartBeat, metricKeys, children, toggleMet
     //     }, [res.data])
 
     return (
-        <>
-        </>
-        // <div className={classes.filterRow}>
-        //     {metricKeys.map((metric, i) => {
-        //         const active = {
-        //             background: '#82ca9d'
-        //         }
-        //         const inactive = {
-        //             background: 'rgba(100,100,100,.4)'
-        //         }
-        //         return (
-        //             <Button style={metric.active ? active : inactive} className={classes.button} onClick={() => toggleMetric(i)} key={metric.id}>
-        //                 {metric.name}
-        //                 {/* @ts-ignore */}
-        //                 {metric.active && latestValues[metric.name] && <span className={classes.span}>{latestValues[metric.name].value} {latestValues[metric.name].unit}</span>}
-        //             </Button>
-        //         )
-        //     })}
-        // </div>
+
+        <div className={classes.filterRow}>
+            {metricKeys.map((metric, i) => {
+                const active = {
+                    background: '#82ca9d'
+                }
+                const inactive = {
+                    background: 'rgba(100,100,100,.4)'
+                }
+                return (
+                    <Button style={metric.active ? active : inactive} className={classes.button} onClick={() => toggleMetric(i)} key={metric.id}>
+                        {metric.name}
+                        {/* @ts-ignore */}
+                        {metric.active && metric.latestValue && <span className={classes.span}>{metric.latestValue} {metric.unit}</span>}
+                    </Button>
+                )
+            })}
+        </div>
     )
 };
 export default FilterRow

@@ -2,13 +2,13 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import Container from '@material-ui/core/Container';
 import Paper from '@material-ui/core/Paper';
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { makeStyles } from '@material-ui/core/styles';
 import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from '@apollo/client';
 import Chart from './Chart'
 import FilterRow from './FilterRow'
 import { Metric } from '../interfaces'
-import { metricKeysAdded, metricToggled } from '../store/metrics';
+import { metricKeysAdded, metricToggled, getMetricKeys } from '../store/metrics';
 
 
 const client = new ApolloClient({
@@ -41,7 +41,9 @@ const Data: React.FC = ({ children }) => {
 
     // STATES
     const [heartBeat, setHeartBeat] = useState<number>(Date.now())
-    const [metrics, setMetrics] = useState<Metric[]>([])
+    const metrics: Metric[] = useSelector(getMetricKeys)
+
+    // const [metrics, setMetrics] = useState<Metric[]>([])
 
     // HOOKS
     useEffect(() => {
@@ -71,9 +73,6 @@ const Data: React.FC = ({ children }) => {
         return result
     }
     const toggleMetric = (i: number) => {
-        let newState = [...metrics]
-        newState[i].active = !newState[i].active
-        setMetrics(newState)
         dispatch(metricToggled(i))
     }
     const { data } = useQuery(query)
@@ -82,7 +81,7 @@ const Data: React.FC = ({ children }) => {
             if (data.getMetrics) {
                 // console.log(handleMetrics(data.getMetrics))
                 dispatch(metricKeysAdded(handleMetrics(data.getMetrics)))
-                setMetrics(handleMetrics([...data.getMetrics]))
+                // setMetrics(handleMetrics([...data.getMetrics]))
             }
         }
     }, [data])
@@ -92,7 +91,7 @@ const Data: React.FC = ({ children }) => {
 
     return (
         <Container className={classes.content} >
-            {/* <FilterRow heartBeat={heartBeat} metrics={metrics} toggleMetric={toggleMetric}></FilterRow> */}
+            <FilterRow heartBeat={heartBeat} metricKeys={metrics} toggleMetric={toggleMetric}></FilterRow>
             <Paper className={classes.chart}>
                 {metrics.length > 0 && <Chart heartBeat={heartBeat} metricObjs={metrics} />}
             </Paper>
