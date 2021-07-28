@@ -2,7 +2,10 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } from 'recharts';
-import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow } from '../interfaces'
+import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData } from '../interfaces'
+import { useDispatch, useSelector } from 'react-redux'
+import { getMetricData, metricDataPopulated, metricDataUpdtated, metricUnitsAdded } from '../store/metrics';
+
 
 const thirtyMin: number = 1800000
 
@@ -13,9 +16,12 @@ interface Props {
 let init = true
 
 const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
+    const dispatch = useDispatch()
     const metrics: string[] = metricObjs.map(metric => metric.name)
-    let query = gql`query{heartBeat}`
+    // @ts-ignore
+    // console.log(metricD)
 
+    // const metricData: MetricRow[] = useSelector(getMetricData)
     const [metricData, setMetricData] = useState<MetricRow[] | []>([])
 
     // GRAPHQL
@@ -23,19 +29,18 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         let actionType = `getLastKnownMeasurement`
         let paramType = `String!`
         let paramKey = `metricName`
-        let actionId = 'Update'
+
         if (init) {
             actionType = `getMeasurements`
             paramType = `MeasurementQuery`
             paramKey = `input`
-            actionId = 'Init'
         }
         let queryHead = `query(`
         let queryContent = ``
         metrics.forEach((metric, i) => {
             queryHead += `$${metric}: ${paramType}, `
             queryContent += `
-            ${metric + actionId}:${actionType}(${paramKey}: $${metric}){
+            ${metric}:${actionType}(${paramKey}: $${metric}){
                 metric
                 at
                 value
@@ -52,6 +57,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         const chartData: MetricRow[] = []
         const dataArr: GqlMetricRow[][] = []
         for (const col in data) {
+            // @ts-ignore
             dataArr.push(data[col])
         }
         dataArr[0].forEach((col, i) => {
@@ -74,11 +80,10 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             // @ts-ignore
             chartData.push(dataRow)
         })
-        setMetricData(chartData)
+        return chartData
     }
     // @ts-ignore
-    const updateMetricData = (storeData: MetricData[], data: GqlLastMetricRow,): MetricRow => {
-        let newStoreData = [...storeData]
+    const buildLatestData = (data: GqlLastMetricRow,): MetricRow => {
         let row: MetricRow | { id: number, at: string } = { id: 0, at: '' }
         for (const metric in data) {
             // console.log(metric)
@@ -89,11 +94,26 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             // @ts-ignore
             row[metric] = data[metric].value
         }
-        newStoreData.shift()
-        newStoreData.push(row)
-        setMetricData(newStoreData)
-
+        return row
+        // newStoreData.shift()
+        // newStoreData.push(row)
+        // setMetricData(newStoreData)
     }
+    const buildMetricUnits = (data: GqlMetricData): MetricUnits => {
+        let units: MetricUnits | {} = {}
+        for (const metric in data) {
+            // @ts-ignore
+            units[metric] = data[metric][0].unit
+        }
+        return units
+    }
+    const updateMetricData = (storeData: MetricRow[], newRow: MetricRow): MetricRow[] => {
+        let newStoreData = [...storeData]
+        newStoreData.shift()
+        newStoreData.push(newRow)
+        return newStoreData
+    }
+
     const input: MetricVariables | {} = {}
     const buildVariables = () => {
         metrics.forEach(metric => {
@@ -123,14 +143,17 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         return strokeColor
     }
     useEffect(() => {
-        console.log(res.data)
+        // console.log(res.data)
         if (res.data) {
             if (init) {
                 init = false
-                buildMetricData(res.data)
+                // setMetricData(buildMetricData(res.data))
+                dispatch(metricDataPopulated(buildMetricData(res.data)))
+                dispatch(metricUnitsAdded(buildMetricUnits(res.data)))
             } else {
-                console.log(res.data)
-                updateMetricData(metricData, res.data)
+                // console.log(res.data)
+                // updateMetricData(metricData, res.data)
+                dispatch(metricDataUpdtated(buildLatestData(res.data)))
             }
 
         }

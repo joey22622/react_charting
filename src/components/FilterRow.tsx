@@ -33,63 +33,65 @@ const useStyles = makeStyles({
 
 type ToggleMetric = (i: number) => void
 interface Props {
-    metrics: Metric[],
+    metricKeys: Metric[],
     heartBeat: number
     toggleMetric: ToggleMetric
 }
 
-const FilterRow: React.FC<Props> = ({ heartBeat, metrics, children, toggleMetric }) => {
+const FilterRow: React.FC<Props> = ({ heartBeat, metricKeys, children, toggleMetric }) => {
     const [latestValues, setLatestValues] = useState({})
     const classes = useStyles();
-    let query = gql`query{
-   getLastKnownMeasurement(metricName:"oilTemp"){
-    metric
-    value
-    unit
-  }
-}`
-    const buildQuery = (metrics: Metric[]) => {
-        if (metrics.length > 0) {
-            let gqlBody = ``
-            metrics.forEach(metric => {
-                gqlBody += `${metric.name}:getLastKnownMeasurement(metricName: "${metric.name}"){
-                metric
-                value
-                unit
-            } 
-            `
-            })
-            query = gql`query{ ${gqlBody} }`
-        }
-    }
+    //     let query = gql`query{
+    //    getLastKnownMeasurement(metricName:"oilTemp"){
+    //     metric
+    //     value
+    //     unit
+    //   }
+    // }`
+    //     const buildQuery = (metrics: Metric[]) => {
+    //         if (metrics.length > 0) {
+    //             let gqlBody = ``
+    //             metrics.forEach(metric => {
+    //                 gqlBody += `${metric.name}:getLastKnownMeasurement(metricName: "${metric.name}"){
+    //                 metric
+    //                 value
+    //                 unit
+    //             } 
+    //             `
+    //             })
+    //             query = gql`query{ ${gqlBody} }`
+    //         }
+    //     }
 
-    buildQuery(metrics)
-    const res = useQuery(query)
-    useEffect(() => {
-        res.refetch()
-    }, [heartBeat])
-    useEffect(() => {
-        setLatestValues(res.data)
-    }, [res.data])
+    //     buildQuery(metrics)
+    //     const res = useQuery(query)
+    //     useEffect(() => {
+    //         res.refetch()
+    //     }, [heartBeat])
+    //     useEffect(() => {
+    //         setLatestValues(res.data)
+    //     }, [res.data])
 
     return (
-        <div className={classes.filterRow}>
-            {metrics.map((metric, i) => {
-                const active = {
-                    background: '#82ca9d'
-                }
-                const inactive = {
-                    background: 'rgba(100,100,100,.4)'
-                }
-                return (
-                    <Button style={metric.active ? active : inactive} className={classes.button} onClick={() => toggleMetric(i)} key={i}>
-                        {metric.name}
-                        {/* @ts-ignore */}
-                        {metric.active && latestValues[metric.name] && <span className={classes.span}>{latestValues[metric.name].value} {latestValues[metric.name].unit}</span>}
-                    </Button>
-                )
-            })}
-        </div>
+        <>
+        </>
+        // <div className={classes.filterRow}>
+        //     {metricKeys.map((metric, i) => {
+        //         const active = {
+        //             background: '#82ca9d'
+        //         }
+        //         const inactive = {
+        //             background: 'rgba(100,100,100,.4)'
+        //         }
+        //         return (
+        //             <Button style={metric.active ? active : inactive} className={classes.button} onClick={() => toggleMetric(i)} key={metric.id}>
+        //                 {metric.name}
+        //                 {/* @ts-ignore */}
+        //                 {metric.active && latestValues[metric.name] && <span className={classes.span}>{latestValues[metric.name].value} {latestValues[metric.name].unit}</span>}
+        //             </Button>
+        //         )
+        //     })}
+        // </div>
     )
 };
 export default FilterRow
