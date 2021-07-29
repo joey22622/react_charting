@@ -2,18 +2,20 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import Container from '@material-ui/core/Container';
 import Paper from '@material-ui/core/Paper';
+import { useDispatch, useSelector } from 'react-redux'
 import { makeStyles } from '@material-ui/core/styles';
 import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from '@apollo/client';
 import Chart from './Chart'
 import FilterRow from './FilterRow'
 import { Metric } from '../interfaces'
+import { metricKeysAdded, metricToggled, getMetricKeys } from '../store/metrics';
+import { getUniqueId } from './functions';
 
 
 const client = new ApolloClient({
     uri: 'https://react.eogresources.com/graphql',
     cache: new InMemoryCache(),
 })
-
 const useStyles = makeStyles({
     content: {
         height: '100%'
@@ -36,10 +38,13 @@ export default () => {
 };
 const Data: React.FC = ({ children }) => {
     const classes = useStyles();
+    const dispatch = useDispatch()
 
     // STATES
     const [heartBeat, setHeartBeat] = useState<number>(Date.now())
-    const [metrics, setMetrics] = useState<Metric[]>([])
+    const metrics: Metric[] = useSelector(getMetricKeys)
+
+    // const [metrics, setMetrics] = useState<Metric[]>([])
 
     // HOOKS
     useEffect(() => {
@@ -57,25 +62,28 @@ const Data: React.FC = ({ children }) => {
         let result: Metric[] = []
         data.reverse().map((name, i) => {
             let metric: Metric = {
-                id: i,
+                id: getUniqueId(),
                 name,
                 active: metrics[i] ? metrics[i].active : false,
-                unit: ''
+                unit: '',
+                latestValue: 100
             }
             result.push(metric)
         })
+        // console.log(result)
         return result
     }
-    const toggleMetric = (i: number) => {
-        let newState = [...metrics]
-        newState[i].active = !newState[i].active
-        setMetrics(newState)
+    const toggleMetric = (i: string) => {
+        dispatch(metricToggled(i))
     }
-
     const { data } = useQuery(query)
     useEffect(() => {
         if (data) {
-            if (data.getMetrics) setMetrics(handleMetrics([...data.getMetrics]))
+            if (data.getMetrics) {
+                // console.log(handleMetrics(data.getMetrics))
+                dispatch(metricKeysAdded(handleMetrics(data.getMetrics)))
+                // setMetrics(handleMetrics([...data.getMetrics]))
+            }
         }
     }, [data])
     const LoadedChart = () => {
@@ -84,7 +92,7 @@ const Data: React.FC = ({ children }) => {
 
     return (
         <Container className={classes.content} >
-            <FilterRow heartBeat={heartBeat} metrics={metrics} toggleMetric={toggleMetric}></FilterRow>
+            <FilterRow heartBeat={heartBeat} metricKeys={metrics} toggleMetric={toggleMetric}></FilterRow>
             <Paper className={classes.chart}>
                 {metrics.length > 0 && <Chart heartBeat={heartBeat} metricObjs={metrics} />}
             </Paper>

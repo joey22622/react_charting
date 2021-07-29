@@ -2,7 +2,11 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } from 'recharts';
-import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow } from '../interfaces'
+import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData } from '../interfaces'
+import { useDispatch, useSelector } from 'react-redux'
+import { getMetricData, metricDataPopulated, metricDataUpdtated, metricUnitsAdded } from '../store/metrics';
+import { getUniqueId } from './functions';
+import moment from 'moment'
 
 const thirtyMin: number = 1800000
 
@@ -10,32 +14,34 @@ interface Props {
     metricObjs: Metric[],
     heartBeat: number
 }
-let init = true
+let loaded = false
 
 const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
+    const dispatch = useDispatch()
     const metrics: string[] = metricObjs.map(metric => metric.name)
-    let query = gql`query{heartBeat}`
+    // @ts-ignore
+    // console.log(metricD)
 
-    const [metricData, setMetricData] = useState<MetricRow[] | []>([])
+    const metricData: MetricRow[] = useSelector(getMetricData)
+    // const [metricData, setMetricData] = useState<MetricRow[] | []>([])
 
     // GRAPHQL
     const buildGql = () => {
         let actionType = `getLastKnownMeasurement`
         let paramType = `String!`
         let paramKey = `metricName`
-        let actionId = 'Update'
-        if (init) {
+
+        if (!loaded) {
             actionType = `getMeasurements`
             paramType = `MeasurementQuery`
             paramKey = `input`
-            actionId = 'Init'
         }
         let queryHead = `query(`
         let queryContent = ``
         metrics.forEach((metric, i) => {
             queryHead += `$${metric}: ${paramType}, `
             queryContent += `
-            ${metric + actionId}:${actionType}(${paramKey}: $${metric}){
+            ${metric}:${actionType}(${paramKey}: $${metric}){
                 metric
                 at
                 value
@@ -52,6 +58,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         const chartData: MetricRow[] = []
         const dataArr: GqlMetricRow[][] = []
         for (const col in data) {
+            // @ts-ignore
             dataArr.push(data[col])
         }
         dataArr[0].forEach((col, i) => {
@@ -59,7 +66,8 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             const time = (i + 1) / (dataArr[0].length) * 30
             const minute = Math.round(time)
             const seconds: number = minute % 1 * 60
-            const at: string = minute + ':' + seconds
+            // const at: string = minute + ':' + seconds
+            const at: string = moment(id).format("h:mm")
             let metricValues = {}
             dataArr.forEach((row, j) => {
                 let value = dataArr[j][i].value
@@ -74,31 +82,43 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             // @ts-ignore
             chartData.push(dataRow)
         })
-        setMetricData(chartData)
+        console.log(chartData)
+        return chartData
     }
     // @ts-ignore
-    const updateMetricData = (storeData: MetricData[], data: GqlLastMetricRow,): MetricRow => {
-        let newStoreData = [...storeData]
+    const buildLatestData = (data: GqlLastMetricRow,): MetricRow => {
         let row: MetricRow | { id: number, at: string } = { id: 0, at: '' }
         for (const metric in data) {
             // console.log(metric)
             // @ts-ignore
-            if (row.at.length <= 0) row.at = '' + data[metric].at
+            if (row.at.length <= 0) row.at = '' + moment(data[metric].at).format("h:mm")
             // @ts-ignore
             if (row.id === 0) row.id = data[metric].at
             // @ts-ignore
             row[metric] = data[metric].value
         }
-        newStoreData.shift()
-        newStoreData.push(row)
-        setMetricData(newStoreData)
-
+        return row
     }
+    const buildMetricUnits = (data: GqlMetricData): MetricUnits => {
+        let units: MetricUnits | {} = {}
+        for (const metric in data) {
+            // @ts-ignore
+            units[metric] = data[metric][0].unit
+        }
+        return units
+    }
+    const updateMetricData = (storeData: MetricRow[], newRow: MetricRow): MetricRow[] => {
+        let newStoreData = [...storeData]
+        newStoreData.shift()
+        newStoreData.push(newRow)
+        return newStoreData
+    }
+
     const input: MetricVariables | {} = {}
     const buildVariables = () => {
         metrics.forEach(metric => {
             let variable: MetricVariable | string = metric
-            if (init) {
+            if (!loaded) {
                 variable = {
                     metricName: metric,
                     before: heartBeat,
@@ -112,7 +132,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         });
     }
     buildVariables()
-    // console.log(init)
+    // console.log(loaded)
     // console.log(input)
     // console.log(buildGql());
     const res = useQuery(buildGql(), { variables: { ...input } })
@@ -123,17 +143,24 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         return strokeColor
     }
     useEffect(() => {
-        console.log(res.data)
+        res.refetch()
+    }, [heartBeat])
+    console.log(res.data)
+    useEffect(() => {
         if (res.data) {
-            if (init) {
-                init = false
-                buildMetricData(res.data)
+            if (!loaded) {
+                loaded = true
+                // setMetricData(buildMetricData(res.data))
+                dispatch(metricDataPopulated(buildMetricData(res.data)))
+                dispatch(metricUnitsAdded(buildMetricUnits(res.data)))
             } else {
-                console.log(res.data)
-                updateMetricData(metricData, res.data)
+                // console.log(res.data)
+                // updateMetricData(metricData, res.data)
+                dispatch(metricDataUpdtated(buildLatestData(res.data)))
             }
 
         }
+        console.log(res.data)
     }, [res.data])
     // useEffect(() => {
     //     console.log(metricData.length)
@@ -149,12 +176,12 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <XAxis dataKey={'at'} tickCount={15}></XAxis>
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <YAxis key={i} dataKey={metric.name} stroke="#82ca9d" />
+                    <YAxis key={metric.id} dataKey={metric.name} stroke="#82ca9d" />
                 ))}
                 <Tooltip />
                 <Legend />
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <Line key={i} type="monotone" dot={false} dataKey={metric.name} stroke="#82ca9d" />
+                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" dot={false} dataKey={metric.name} stroke="#82ca9d" />
                 ))}
             </LineChart>
         </ResponsiveContainer>
