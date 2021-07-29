@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useEffect } from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, useSubscription, gql } from '@apollo/client';
 import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } from 'recharts';
 import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData, ChartData } from '../interfaces'
 import { useDispatch, useSelector } from 'react-redux'
@@ -21,6 +21,15 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     const metrics: string[] = metricObjs.map(metric => metric.name)
     const metricData: MetricRow[] = useSelector(getMetricData)
 
+    const gqlSub = gql`subscription{
+        newMeasurement{
+            metric
+            at
+            value
+            unit
+        }
+    }`
+    const { data, loading } = useSubscription(gqlSub);
     // GRAPHQL
     const buildGql = () => {
         let actionType = `getLastKnownMeasurement`
@@ -131,7 +140,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                 <Tooltip />
                 <Legend />
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" dot={false} dataKey={metric.name} unit={metric.unit} stroke={metric.color} />
+                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" dot={false} dataKey={`chartData[${metric.name}]`} unit={metric.unit} stroke={metric.color} />
                 ))}
             </LineChart>
         </ResponsiveContainer>

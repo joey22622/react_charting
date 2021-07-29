@@ -25,6 +25,7 @@ export interface GqlLastMetricRow {
     [index: string]: GqlMetricRow
 
 }
+
 export interface GqlMetricData {
     [index: string]: GqlMetricRow[]
 }
