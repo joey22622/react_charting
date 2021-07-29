@@ -6,7 +6,7 @@ import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLa
 import { useDispatch, useSelector } from 'react-redux'
 import { getMetricData, metricDataPopulated, metricDataUpdtated, metricUnitsAdded } from '../store/metrics';
 import { getUniqueId } from './functions';
-
+import moment from 'moment'
 
 const thirtyMin: number = 1800000
 
@@ -66,7 +66,8 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             const time = (i + 1) / (dataArr[0].length) * 30
             const minute = Math.round(time)
             const seconds: number = minute % 1 * 60
-            const at: string = minute + ':' + seconds
+            // const at: string = minute + ':' + seconds
+            const at: string = moment(id).format("h:mm")
             let metricValues = {}
             dataArr.forEach((row, j) => {
                 let value = dataArr[j][i].value
@@ -81,6 +82,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             // @ts-ignore
             chartData.push(dataRow)
         })
+        console.log(chartData)
         return chartData
     }
     // @ts-ignore
@@ -89,7 +91,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         for (const metric in data) {
             // console.log(metric)
             // @ts-ignore
-            if (row.at.length <= 0) row.at = '' + data[metric].at
+            if (row.at.length <= 0) row.at = '' + moment(data[metric].at).format("h:mm")
             // @ts-ignore
             if (row.id === 0) row.id = data[metric].at
             // @ts-ignore
