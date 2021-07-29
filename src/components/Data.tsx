@@ -11,12 +11,6 @@ import { Metric } from '../interfaces'
 import { metricKeysAdded, metricToggled, getMetricKeys } from '../store/metrics';
 import { getUniqueId } from './functions';
 
-import red from '@material-ui/core/colors/red'
-import orange from '@material-ui/core/colors/orange'
-import yellow from '@material-ui/core/colors/yellow'
-import green from '@material-ui/core/colors/green'
-import blue from '@material-ui/core/colors/blue'
-import purple from '@material-ui/core/colors/purple'
 
 
 const client = new ApolloClient({
@@ -31,14 +25,7 @@ const colors: string[] = [
     '#00897b',
     '#2e7d32'
 ]
-// const colors: string[] = [
-//     '#00695c',
-//     '#00796b',
-//     '#00897b',
-//     '#009688',
-//     '#0097a7',
-//     '#00838f'
-// ]
+
 const useStyles = makeStyles({
     content: {
         height: '100%'
@@ -67,24 +54,12 @@ const Data: React.FC = ({ children }) => {
     const [heartBeat, setHeartBeat] = useState<number>(Date.now())
     const metrics: Metric[] = useSelector(getMetricKeys)
 
-    // const [metrics, setMetrics] = useState<Metric[]>([])
-
-    // HOOKS
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setHeartBeat(Date.now())
-        }, 1299)
-        return () => {
-            clearInterval(timer)
-        }
-    })
-
     // CALLBACKS
     const handleMetrics = (input: string[]): Metric[] => {
         const data: string[] = [...input]
         let result: Metric[] = []
         let colorIndex = 0;
-        data.reverse().map((name, i) => {
+        data.reverse().forEach((name, i) => {
             if (colorIndex >= colors.length) colorIndex = 0
             let metric: Metric = {
                 id: getUniqueId(),
@@ -97,24 +72,29 @@ const Data: React.FC = ({ children }) => {
             colorIndex++
             result.push(metric)
         })
-        // console.log(result)
         return result
     }
     const toggleMetric = (i: string) => {
         dispatch(metricToggled(i))
     }
     const { data } = useQuery(query)
+
     useEffect(() => {
         if (data) {
             if (data.getMetrics) {
                 dispatch(metricKeysAdded(handleMetrics(data.getMetrics)))
-                // setMetrics(handleMetrics([...data.getMetrics]))
             }
         }
     }, [data])
-    const LoadedChart = () => {
 
-    }
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setHeartBeat(Date.now())
+        }, 1299)
+        return () => {
+            clearInterval(timer)
+        }
+    })
 
     return (
         <Container className={classes.content} >

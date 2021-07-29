@@ -52,7 +52,6 @@ const FilterRow: React.FC<Props> = ({ metricKeys, toggleMetric }) => {
                 return (
                     <Button style={metric.active ? active : inactive} className={classes.button} onClick={() => toggleMetric(metric.id)} key={metric.id}>
                         {metric.name}
-                        {/* @ts-ignore */}
                         {metric.active && metric.latestValue && <span className={classes.span}>{metric.latestValue} {metric.unit}</span>}
                     </Button>
                 )

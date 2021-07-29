@@ -19,9 +19,6 @@ let loaded = false
 const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     const dispatch = useDispatch()
     const metrics: string[] = metricObjs.map(metric => metric.name)
-    // @ts-ignore
-    // console.log(metricD)
-
     const metricData: MetricRow[] = useSelector(getMetricData)
 
     // GRAPHQL
@@ -51,8 +48,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         return gql`${queryHead} ${queryContent}
         }`
     }
-    // console.log(buildGql());
-    // @ts-ignore
+
     const buildMetricData = (data: GqlMetricData): MetricRow[] => {
         const chartData: MetricRow[] = []
         const dataArr: GqlMetricRow[][] = []
@@ -72,19 +68,14 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             })
 
 
-            // @ts-ignore
             let dataRow: MetricRow = { ...metricValues, at, id }
-            // @ts-ignore
             chartData.push(dataRow)
         })
-        console.log(chartData)
         return chartData
     }
-    // @ts-ignore
     const buildLatestData = (data: GqlLastMetricRow,): MetricRow => {
         let row: MetricRow | { id: number, at: string } = { id: 0, at: '' }
         for (const metric in data) {
-            // console.log(metric)
             // @ts-ignore
             if (row.at.length <= 0) row.at = '' + moment(data[metric].at).format("h:mm")
             // @ts-ignore
@@ -102,12 +93,6 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         }
         return units
     }
-    const updateMetricData = (storeData: MetricRow[], newRow: MetricRow): MetricRow[] => {
-        let newStoreData = [...storeData]
-        newStoreData.shift()
-        newStoreData.push(newRow)
-        return newStoreData
-    }
 
     const input: MetricVariables | {} = {}
     const buildVariables = () => {
@@ -120,42 +105,28 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                     after: heartBeat >= thirtyMin ? heartBeat - thirtyMin : 0
                 }
             }
-            // Why????
             // @ts-ignore
             input[metric] = variable
 
         });
     }
     buildVariables()
-    // console.log(loaded)
-    // console.log(input)
-    // console.log(buildGql());
     const res = useQuery(buildGql(), { variables: { ...input } })
-    const handleLineVisibility = (active: boolean, strokeColor: string) => {
-        if (!active) {
-            return 'rgba(255,255,255,0)'
-        }
-        return strokeColor
-    }
+
     useEffect(() => {
         res.refetch()
     }, [heartBeat])
-    console.log(res.data)
     useEffect(() => {
         if (res.data) {
             if (!loaded) {
                 loaded = true
-                // setMetricData(buildMetricData(res.data))
                 dispatch(metricDataPopulated(buildMetricData(res.data)))
                 dispatch(metricUnitsAdded(buildMetricUnits(res.data)))
             } else {
-                // console.log(res.data)
-                // updateMetricData(metricData, res.data)
                 dispatch(metricDataUpdtated(buildLatestData(res.data)))
             }
 
         }
-        console.log(res.data)
     }, [res.data])
 
     return (
@@ -165,6 +136,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <XAxis dataKey={'at'} tickCount={15}></XAxis>
                 <YAxis allowDataOverflow={false} />
+                {/* ))} */}
                 <Tooltip />
                 <Legend />
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (

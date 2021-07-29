@@ -4,7 +4,7 @@ export interface Metric {
     active: boolean
     unit: string
     latestValue: number
-    color?: string
+    color: string
 }
 export interface MetricRow {
     "oilTemp"?: number

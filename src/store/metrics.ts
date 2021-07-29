@@ -1,10 +1,8 @@
-import { createSlice, createAction } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit'
 import { PayloadAction } from 'redux-starter-kit'
 import { createSelector } from 'reselect'
-// import { apiCallBegan } from './api'
 import { Metric, MetricRow, MetricUnits } from '../interfaces'
 import { WeatherForLocation } from '../Features/Weather/reducer'
-import { State } from 'react-use/lib/useScroll'
 
 interface Store {
   weather: WeatherForLocation
@@ -24,9 +22,7 @@ const slice = createSlice({
   initialState,
   reducers: {
     metricToggled: (metrics, action) => {
-      //   @ts-ignore
       const i = metrics.keys.findIndex(metric => metric.id === action.payload)
-      //   @ts-ignore
       metrics.keys[i].active = !metrics.keys[i].active
     },
     metricKeysAdded: (metrics, action: PayloadAction<Metric[]>) => {
@@ -39,12 +35,9 @@ const slice = createSlice({
       })
     },
     metricDataPopulated: (metrics, action: PayloadAction<MetricRow[]>) => {
-      //  writes the inital state of the metrics slice
       metrics.data = action.payload
     },
     metricDataUpdtated: (metrics, action: PayloadAction<MetricRow>) => {
-      //  removes the oldest row of all metrics and adds the latest row
-      //  adds latestValue field metric keys
       metrics.data.shift()
       metrics.keys.forEach(metric => {
         // @ts-ignore
