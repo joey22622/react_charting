@@ -10,11 +10,37 @@ import FilterRow from './FilterRow'
 import { Metric } from '../interfaces'
 import { metricKeysAdded, metricToggled, getMetricKeys } from '../store/metrics';
 import { getUniqueId } from './functions';
+import { WebSocketLink } from '@apollo/client/link/ws';
+import { getMainDefinition } from '@apollo/client/utilities';
+import { split, HttpLink } from '@apollo/client';
+
+
+const httpLink = new HttpLink({
+    uri: 'https://react.eogresources.com/graphql'
+});
+
+const wsLink = new WebSocketLink({
+    uri: 'ws://react.eogresources.com/graphql',
+    options: {
+        reconnect: true
+    }
+});
+const splitLink = split(
+    ({ query }) => {
+        const definition = getMainDefinition(query);
+        return (
+            definition.kind === 'OperationDefinition' &&
+            definition.operation === 'subscription'
+        );
+    },
+    wsLink,
+    httpLink,
+);
 
 
 
 const client = new ApolloClient({
-    uri: 'https://react.eogresources.com/graphql',
+    link: splitLink,
     cache: new InMemoryCache(),
 })
 const colors: string[] = [

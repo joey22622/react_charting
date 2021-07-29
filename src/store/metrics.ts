@@ -10,8 +10,8 @@ interface Store {
 }
 
 interface MetricsInitState {
-  keys: Metric[] | []
-  data: MetricRow[] | []
+  keys: Metric[]
+  data: MetricRow[]
 }
 const initialState: MetricsInitState = {
   keys: [],
@@ -30,7 +30,6 @@ const slice = createSlice({
     },
     metricUnitsAdded: (metrics, action: PayloadAction<MetricUnits>) => {
       metrics.keys.forEach(metric => {
-        // @ts-ignore
         metric.unit = action.payload[metric.name]
       })
     },
@@ -40,12 +39,9 @@ const slice = createSlice({
     metricDataUpdtated: (metrics, action: PayloadAction<MetricRow>) => {
       metrics.data.shift()
       metrics.keys.forEach(metric => {
-        // @ts-ignore
-        metric.latestValue = action.payload[metric.name]
+        metric.latestValue = action.payload.chartData[metric.name]
       })
-      //   @ts-ignore
       metrics.data.push(action.payload)
-      // console.log(action.payload)
     },
   },
 })

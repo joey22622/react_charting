@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } from 'recharts';
-import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData } from '../interfaces'
+import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData, ChartData } from '../interfaces'
 import { useDispatch, useSelector } from 'react-redux'
 import { getMetricData, metricDataPopulated, metricDataUpdtated, metricUnitsAdded } from '../store/metrics';
 import { getUniqueId } from './functions';
@@ -53,49 +53,43 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         const chartData: MetricRow[] = []
         const dataArr: GqlMetricRow[][] = []
         for (const col in data) {
-            // @ts-ignore
             dataArr.push(data[col])
         }
         dataArr[0].forEach((col, i) => {
             const id = col.at
             const at: string = moment(id).format("h:mm")
-            let metricValues = {}
+            let metricValues: ChartData = {}
             dataArr.forEach((row, j) => {
                 let value = dataArr[j][i].value
                 let name = dataArr[j][i].metric
-                // @ts-ignore
                 metricValues[name] = value
             })
 
 
-            let dataRow: MetricRow = { ...metricValues, at, id }
+            let dataRow: MetricRow = { chartData: { ...metricValues }, at, id }
             chartData.push(dataRow)
         })
         return chartData
     }
     const buildLatestData = (data: GqlLastMetricRow,): MetricRow => {
-        let row: MetricRow | { id: number, at: string } = { id: 0, at: '' }
+        let row: MetricRow = { id: 0, at: '', chartData: {} }
         for (const metric in data) {
-            // @ts-ignore
             if (row.at.length <= 0) row.at = '' + moment(data[metric].at).format("h:mm")
-            // @ts-ignore
             if (row.id === 0) row.id = data[metric].at
-            // @ts-ignore
-            row[metric] = data[metric].value
+            row.chartData[metric] = data[metric].value
         }
         return row
     }
     const buildMetricUnits = (data: GqlMetricData): MetricUnits => {
-        let units: MetricUnits | {} = {}
+        let units: MetricUnits = {}
         for (const metric in data) {
-            // @ts-ignore
             units[metric] = data[metric][0].unit
         }
         return units
     }
 
-    const input: MetricVariables | {} = {}
     const buildVariables = () => {
+        let variables: MetricVariables = {}
         metrics.forEach(metric => {
             let variable: MetricVariable | string = metric
             if (!loaded) {
@@ -105,13 +99,12 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                     after: heartBeat >= thirtyMin ? heartBeat - thirtyMin : 0
                 }
             }
-            // @ts-ignore
-            input[metric] = variable
-
+            variables[metric] = variable
         });
+        return variables
     }
     buildVariables()
-    const res = useQuery(buildGql(), { variables: { ...input } })
+    const res = useQuery(buildGql(), { variables: { ...buildVariables() } })
 
     useEffect(() => {
         res.refetch()
