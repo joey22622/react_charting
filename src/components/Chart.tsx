@@ -130,13 +130,11 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     }, [res.data])
 
     return (
-        // <></>
         <ResponsiveContainer>
             <LineChart data={metricData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <XAxis dataKey={'at'} tickCount={15}></XAxis>
                 <YAxis allowDataOverflow={false} />
-                {/* ))} */}
                 <Tooltip />
                 <Legend />
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (

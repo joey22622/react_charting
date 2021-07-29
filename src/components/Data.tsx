@@ -32,6 +32,7 @@ const useStyles = makeStyles({
     },
     chart: {
         height: '600px',
+        margin: '0 .5rem'
     }
 });
 const query = gql`
@@ -50,11 +51,9 @@ const Data: React.FC = ({ children }) => {
     const classes = useStyles();
     const dispatch = useDispatch()
 
-    // STATES
     const [heartBeat, setHeartBeat] = useState<number>(Date.now())
     const metrics: Metric[] = useSelector(getMetricKeys)
 
-    // CALLBACKS
     const handleMetrics = (input: string[]): Metric[] => {
         const data: string[] = [...input]
         let result: Metric[] = []
