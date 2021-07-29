@@ -16,10 +16,10 @@ const useStyles = makeStyles({
         background: 'rgba(0,0,0,.2)',
         flexGrow: 1,
         margin: '1rem .5rem',
-        transition: '.2s',
+        transition: '.2s !important',
         color: 'white',
         padding: '.5rem',
-        textTransform: 'none'
+        textTransform: 'none',
     },
     span: {
         transition: '.1s',
@@ -44,7 +44,7 @@ const FilterRow: React.FC<Props> = ({ metricKeys, toggleMetric }) => {
         <div className={classes.filterRow}>
             {metricKeys.map((metric, i) => {
                 const active = {
-                    background: '#82ca9d'
+                    background: metric.color
                 }
                 const inactive = {
                     background: 'rgba(100,100,100,.4)'
@@ -52,7 +52,6 @@ const FilterRow: React.FC<Props> = ({ metricKeys, toggleMetric }) => {
                 return (
                     <Button style={metric.active ? active : inactive} className={classes.button} onClick={() => toggleMetric(metric.id)} key={metric.id}>
                         {metric.name}
-                        {/* @ts-ignore */}
                         {metric.active && metric.latestValue && <span className={classes.span}>{metric.latestValue} {metric.unit}</span>}
                     </Button>
                 )
