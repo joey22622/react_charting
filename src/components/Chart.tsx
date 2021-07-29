@@ -5,6 +5,7 @@ import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } f
 import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData } from '../interfaces'
 import { useDispatch, useSelector } from 'react-redux'
 import { getMetricData, metricDataPopulated, metricDataUpdtated, metricUnitsAdded } from '../store/metrics';
+import { getUniqueId } from './functions';
 
 
 const thirtyMin: number = 1800000
@@ -13,7 +14,7 @@ interface Props {
     metricObjs: Metric[],
     heartBeat: number
 }
-let init = true
+let loaded = false
 
 const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     const dispatch = useDispatch()
@@ -30,7 +31,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         let paramType = `String!`
         let paramKey = `metricName`
 
-        if (init) {
+        if (!loaded) {
             actionType = `getMeasurements`
             paramType = `MeasurementQuery`
             paramKey = `input`
@@ -95,9 +96,6 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             row[metric] = data[metric].value
         }
         return row
-        // newStoreData.shift()
-        // newStoreData.push(row)
-        // setMetricData(newStoreData)
     }
     const buildMetricUnits = (data: GqlMetricData): MetricUnits => {
         let units: MetricUnits | {} = {}
@@ -118,7 +116,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     const buildVariables = () => {
         metrics.forEach(metric => {
             let variable: MetricVariable | string = metric
-            if (init) {
+            if (!loaded) {
                 variable = {
                     metricName: metric,
                     before: heartBeat,
@@ -132,7 +130,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         });
     }
     buildVariables()
-    // console.log(init)
+    // console.log(loaded)
     // console.log(input)
     // console.log(buildGql());
     const res = useQuery(buildGql(), { variables: { ...input } })
@@ -143,10 +141,13 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         return strokeColor
     }
     useEffect(() => {
-        // console.log(res.data)
+        res.refetch()
+    }, [heartBeat])
+    console.log(res.data)
+    useEffect(() => {
         if (res.data) {
-            if (init) {
-                init = false
+            if (!loaded) {
+                loaded = true
                 // setMetricData(buildMetricData(res.data))
                 dispatch(metricDataPopulated(buildMetricData(res.data)))
                 dispatch(metricUnitsAdded(buildMetricUnits(res.data)))
@@ -157,7 +158,8 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             }
 
         }
-    }, [heartBeat])
+        console.log(res.data)
+    }, [res.data])
     // useEffect(() => {
     //     console.log(metricData.length)
     //     if (metricData.length > 0) {
@@ -172,12 +174,12 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <XAxis dataKey={'at'} tickCount={15}></XAxis>
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <YAxis key={i} dataKey={metric.name} stroke="#82ca9d" />
+                    <YAxis key={metric.id} dataKey={metric.name} stroke="#82ca9d" />
                 ))}
                 <Tooltip />
                 <Legend />
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <Line key={i} type="monotone" dot={false} dataKey={metric.name} stroke="#82ca9d" />
+                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" dot={false} dataKey={metric.name} stroke="#82ca9d" />
                 ))}
             </LineChart>
         </ResponsiveContainer>

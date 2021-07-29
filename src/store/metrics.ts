@@ -34,7 +34,6 @@ const slice = createSlice({
     },
     metricUnitsAdded: (metrics, action: PayloadAction<MetricUnits>) => {
       metrics.keys.forEach(metric => {
-        console.log(action.payload)
         // @ts-ignore
         metric.unit = action.payload[metric.name]
       })

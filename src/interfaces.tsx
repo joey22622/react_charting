@@ -1,5 +1,5 @@
 export interface Metric {
-    id: number
+    id: string
     name: string
     active: boolean
     unit: string

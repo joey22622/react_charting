@@ -9,6 +9,7 @@ import Chart from './Chart'
 import FilterRow from './FilterRow'
 import { Metric } from '../interfaces'
 import { metricKeysAdded, metricToggled, getMetricKeys } from '../store/metrics';
+import { getUniqueId } from './functions';
 
 
 const client = new ApolloClient({
@@ -61,7 +62,7 @@ const Data: React.FC = ({ children }) => {
         let result: Metric[] = []
         data.reverse().map((name, i) => {
             let metric: Metric = {
-                id: i,
+                id: getUniqueId(),
                 name,
                 active: metrics[i] ? metrics[i].active : false,
                 unit: '',
@@ -72,7 +73,7 @@ const Data: React.FC = ({ children }) => {
         // console.log(result)
         return result
     }
-    const toggleMetric = (i: number) => {
+    const toggleMetric = (i: string) => {
         dispatch(metricToggled(i))
     }
     const { data } = useQuery(query)
