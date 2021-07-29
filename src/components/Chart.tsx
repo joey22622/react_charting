@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } from 'recharts';
 import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData } from '../interfaces'
@@ -23,7 +23,6 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
     // console.log(metricD)
 
     const metricData: MetricRow[] = useSelector(getMetricData)
-    // const [metricData, setMetricData] = useState<MetricRow[] | []>([])
 
     // GRAPHQL
     const buildGql = () => {
@@ -63,10 +62,6 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         }
         dataArr[0].forEach((col, i) => {
             const id = col.at
-            const time = (i + 1) / (dataArr[0].length) * 30
-            const minute = Math.round(time)
-            const seconds: number = minute % 1 * 60
-            // const at: string = minute + ':' + seconds
             const at: string = moment(id).format("h:mm")
             let metricValues = {}
             dataArr.forEach((row, j) => {
@@ -162,26 +157,18 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         }
         console.log(res.data)
     }, [res.data])
-    // useEffect(() => {
-    //     console.log(metricData.length)
-    //     if (metricData.length > 0) {
-    //         console.log('oldest', metricData[0].id)
-    //         console.log('newest', metricData[metricData.length - 1].at)
-    //     }
-    // }, [metricData])
+
     return (
         // <></>
         <ResponsiveContainer>
             <LineChart data={metricData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <XAxis dataKey={'at'} tickCount={15}></XAxis>
-                {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <YAxis key={metric.id} dataKey={metric.name} stroke="#82ca9d" />
-                ))}
+                <YAxis allowDataOverflow={false} />
                 <Tooltip />
                 <Legend />
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" dot={false} dataKey={metric.name} stroke="#82ca9d" />
+                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" dot={false} dataKey={metric.name} unit={metric.unit} stroke={metric.color} />
                 ))}
             </LineChart>
         </ResponsiveContainer>
