@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { PayloadAction } from 'redux-starter-kit'
 import { createSelector } from 'reselect'
-import { ChartData, Metric, MetricRow, MetricUnits, MetricUpdate } from '../interfaces'
+import { Metric, MetricRow, MetricUnits, MetricUpdate } from '../interfaces'
 import { WeatherForLocation } from '../Features/Weather/reducer'
 import moment from 'moment'
 
@@ -40,7 +40,6 @@ const slice = createSlice({
     metricDataUpdated: (metrics, action: PayloadAction<MetricUpdate>) => {
       const { name, value, id } = action.payload
       const i = metrics.data.findIndex(row => row.id === id)
-      console.log(i)
       if (i >= 0) {
         metrics.data[i].chartData[name] = value
       } else {

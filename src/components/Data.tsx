@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Container from '@material-ui/core/Container';
 import Paper from '@material-ui/core/Paper';
 import { useDispatch, useSelector } from 'react-redux'
@@ -66,6 +66,26 @@ query{
    getMetrics
 }
 `
+const handleMetrics = (input: string[], metrics: Metric[]): Metric[] => {
+    const data: string[] = [...input]
+    let result: Metric[] = []
+    let colorIndex = 0;
+    data.reverse().forEach((name, i) => {
+        if (colorIndex >= colors.length) colorIndex = 0
+        let metric: Metric = {
+            id: getUniqueId(),
+            name,
+            active: metrics[i] ? metrics[i].active : false,
+            unit: '',
+            latestValue: 100,
+            color: colors[colorIndex]
+        }
+        colorIndex++
+        result.push(metric)
+    })
+    return result
+}
+
 export default () => {
     return (
         <ApolloProvider client={client}>
@@ -73,59 +93,30 @@ export default () => {
         </ApolloProvider>
     )
 };
-const Data: React.FC = ({ children }) => {
+
+const Data: React.FC = () => {
     const classes = useStyles();
     const dispatch = useDispatch()
-
-    const [heartBeat, setHeartBeat] = useState<number>(Date.now())
     const metrics: Metric[] = useSelector(getMetricKeys)
+    const { data } = useQuery(query)
 
-    const handleMetrics = (input: string[]): Metric[] => {
-        const data: string[] = [...input]
-        let result: Metric[] = []
-        let colorIndex = 0;
-        data.reverse().forEach((name, i) => {
-            if (colorIndex >= colors.length) colorIndex = 0
-            let metric: Metric = {
-                id: getUniqueId(),
-                name,
-                active: metrics[i] ? metrics[i].active : false,
-                unit: '',
-                latestValue: 100,
-                color: colors[colorIndex]
-            }
-            colorIndex++
-            result.push(metric)
-        })
-        return result
-    }
     const toggleMetric = (i: string) => {
         dispatch(metricToggled(i))
     }
-    const { data } = useQuery(query)
 
     useEffect(() => {
         if (data) {
             if (data.getMetrics) {
-                dispatch(metricKeysAdded(handleMetrics(data.getMetrics)))
+                dispatch(metricKeysAdded(handleMetrics(data.getMetrics, metrics)))
             }
         }
     }, [data])
 
-    // useEffect(() => {
-    //     const timer = setInterval(() => {
-    //         setHeartBeat(Date.now())
-    //     }, 1299)
-    //     return () => {
-    //         clearInterval(timer)
-    //     }
-    // })
-
     return (
         <Container className={classes.content} >
-            <FilterRow heartBeat={heartBeat} metricKeys={metrics} toggleMetric={toggleMetric}></FilterRow>
+            <FilterRow metricKeys={metrics} toggleMetric={toggleMetric}></FilterRow>
             <Paper className={classes.chart}>
-                {metrics.length > 0 && <Chart heartBeat={heartBeat} metricObjs={metrics} />}
+                {metrics.length > 0 && <Chart metricObjs={metrics} />}
             </Paper>
         </Container >
     )

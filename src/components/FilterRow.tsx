@@ -32,7 +32,6 @@ const useStyles = makeStyles({
 type ToggleMetric = (i: string) => void
 interface Props {
     metricKeys: Metric[],
-    heartBeat: number
     toggleMetric: ToggleMetric
 }
 
@@ -43,12 +42,8 @@ const FilterRow: React.FC<Props> = ({ metricKeys, toggleMetric }) => {
 
         <div className={classes.filterRow}>
             {metricKeys.map((metric, i) => {
-                const active = {
-                    background: metric.color
-                }
-                const inactive = {
-                    background: 'rgba(100,100,100,.4)'
-                }
+                const active = { background: metric.color }
+                const inactive = { background: 'rgba(100,100,100,.4)' }
                 return (
                     <Button style={metric.active ? active : inactive} className={classes.button} onClick={() => toggleMetric(metric.id)} key={metric.id}>
                         {metric.name}
