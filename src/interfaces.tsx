@@ -9,6 +9,12 @@ export interface Metric {
 export interface ChartData {
     [index: string]: number
 }
+export interface MetricUpdate {
+    name: string
+    value: number
+    id: number
+}
+
 export interface MetricRow {
     at: string
     id: number
@@ -21,9 +27,14 @@ export interface GqlMetricRow {
     value: number
     unit: string
 }
+export interface GqlSubRow {
+    __typename?: string
+    metric: string,
+    at: number,
+    value: number
+}
 export interface GqlLastMetricRow {
     [index: string]: GqlMetricRow
-
 }
 
 export interface GqlMetricData {

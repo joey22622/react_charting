@@ -1,8 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { PayloadAction } from 'redux-starter-kit'
 import { createSelector } from 'reselect'
-import { Metric, MetricRow, MetricUnits } from '../interfaces'
+import { Metric, MetricRow, MetricUnits, MetricUpdate } from '../interfaces'
 import { WeatherForLocation } from '../Features/Weather/reducer'
+import moment from 'moment'
 
 interface Store {
   weather: WeatherForLocation
@@ -36,12 +37,24 @@ const slice = createSlice({
     metricDataPopulated: (metrics, action: PayloadAction<MetricRow[]>) => {
       metrics.data = action.payload
     },
-    metricDataUpdtated: (metrics, action: PayloadAction<MetricRow>) => {
-      metrics.data.shift()
-      metrics.keys.forEach(metric => {
-        metric.latestValue = action.payload.chartData[metric.name]
-      })
-      metrics.data.push(action.payload)
+    metricDataUpdated: (metrics, action: PayloadAction<MetricUpdate>) => {
+      const { name, value, id } = action.payload
+      const i = metrics.data.findIndex(row => row.id === id)
+      if (i >= 0) {
+        metrics.data[i].chartData[name] = value
+      } else {
+        metrics.data.shift()
+        const newRow = {
+          id: id,
+          at: moment(id).format('h:mm'),
+          chartData: {
+            [name]: value,
+          },
+        }
+        metrics.data.push(newRow)
+      }
+      const keyIndex = metrics.keys.findIndex(key => key.name === name)
+      metrics.keys[keyIndex].latestValue = value
     },
   },
 })
@@ -51,7 +64,7 @@ export const {
   metricKeysAdded,
   metricDataPopulated,
   metricUnitsAdded,
-  metricDataUpdtated,
+  metricDataUpdated,
 } = slice.actions
 
 export const getMetricData = createSelector(

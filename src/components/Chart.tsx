@@ -1,27 +1,21 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useSubscription, gql } from '@apollo/client';
 import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } from 'recharts';
-import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData, ChartData } from '../interfaces'
+import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, MetricUnits, GqlMetricData, ChartData, MetricUpdate } from '../interfaces'
 import { useDispatch, useSelector } from 'react-redux'
-import { getMetricData, metricDataPopulated, metricDataUpdtated, metricUnitsAdded } from '../store/metrics';
+import { getMetricData, metricDataPopulated, metricDataUpdated, metricUnitsAdded } from '../store/metrics';
 import { getUniqueId } from './functions';
 import moment from 'moment'
 
 const thirtyMin: number = 1800000
+const heartBeat = Date.now()
 
 interface Props {
     metricObjs: Metric[],
-    heartBeat: number
 }
-let loaded = false
 
-const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
-    const dispatch = useDispatch()
-    const metrics: string[] = metricObjs.map(metric => metric.name)
-    const metricData: MetricRow[] = useSelector(getMetricData)
-
-    const gqlSub = gql`subscription{
+const gqlSub = gql`subscription{
         newMeasurement{
             metric
             at
@@ -29,107 +23,96 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             unit
         }
     }`
-    const { data, loading } = useSubscription(gqlSub);
-    // GRAPHQL
-    const buildGql = () => {
-        let actionType = `getLastKnownMeasurement`
-        let paramType = `String!`
-        let paramKey = `metricName`
 
-        if (!loaded) {
-            actionType = `getMeasurements`
-            paramType = `MeasurementQuery`
-            paramKey = `input`
-        }
-        let queryHead = `query(`
-        let queryContent = ``
-        metrics.forEach((metric, i) => {
-            queryHead += `$${metric}: ${paramType}, `
-            queryContent += `
+const buildGql = (metrics: string[]) => {
+    let actionType = `getMeasurements`
+    let paramType = `MeasurementQuery`
+    let paramKey = `input`
+    let queryHead = `query(`
+    let queryContent = ``
+    metrics.forEach((metric, i) => {
+        queryHead += `$${metric}: ${paramType}, `
+        queryContent += `
             ${metric}:${actionType}(${paramKey}: $${metric}){
                 metric
                 at
                 value
                 unit
             }`
-        })
-        queryHead += `){`
-        return gql`${queryHead} ${queryContent}
+    })
+    queryHead += `){`
+    return gql`${queryHead} ${queryContent}
         }`
+}
+
+const buildMetricData = (data: GqlMetricData): MetricRow[] => {
+    const chartData: MetricRow[] = []
+    const dataArr: GqlMetricRow[][] = []
+    for (const col in data) {
+        dataArr.push(data[col])
     }
-
-    const buildMetricData = (data: GqlMetricData): MetricRow[] => {
-        const chartData: MetricRow[] = []
-        const dataArr: GqlMetricRow[][] = []
-        for (const col in data) {
-            dataArr.push(data[col])
-        }
-        dataArr[0].forEach((col, i) => {
-            const id = col.at
-            const at: string = moment(id).format("h:mm")
-            let metricValues: ChartData = {}
-            dataArr.forEach((row, j) => {
-                let value = dataArr[j][i].value
-                let name = dataArr[j][i].metric
-                metricValues[name] = value
-            })
-
-
-            let dataRow: MetricRow = { chartData: { ...metricValues }, at, id }
-            chartData.push(dataRow)
+    dataArr[0].forEach((col, i) => {
+        const id = col.at
+        const at: string = moment(id).format("h:mm")
+        let metricValues: ChartData = {}
+        dataArr.forEach((row, j) => {
+            let value = dataArr[j][i].value
+            let name = dataArr[j][i].metric
+            metricValues[name] = value
         })
-        return chartData
-    }
-    const buildLatestData = (data: GqlLastMetricRow,): MetricRow => {
-        let row: MetricRow = { id: 0, at: '', chartData: {} }
-        for (const metric in data) {
-            if (row.at.length <= 0) row.at = '' + moment(data[metric].at).format("h:mm")
-            if (row.id === 0) row.id = data[metric].at
-            row.chartData[metric] = data[metric].value
-        }
-        return row
-    }
-    const buildMetricUnits = (data: GqlMetricData): MetricUnits => {
-        let units: MetricUnits = {}
-        for (const metric in data) {
-            units[metric] = data[metric][0].unit
-        }
-        return units
-    }
+        let dataRow: MetricRow = { chartData: { ...metricValues }, at, id }
+        chartData.push(dataRow)
+    })
+    return chartData
+}
 
-    const buildVariables = () => {
-        let variables: MetricVariables = {}
-        metrics.forEach(metric => {
-            let variable: MetricVariable | string = metric
-            if (!loaded) {
-                variable = {
-                    metricName: metric,
-                    before: heartBeat,
-                    after: heartBeat >= thirtyMin ? heartBeat - thirtyMin : 0
-                }
-            }
-            variables[metric] = variable
-        });
-        return variables
+const buildVariables = (metrics: string[]) => {
+    let variables: MetricVariables = {}
+    metrics.forEach(metric => {
+        let variable: MetricVariable = {
+            metricName: metric,
+            before: heartBeat,
+            after: heartBeat - thirtyMin
+        }
+        variables[metric] = variable
+    });
+    return variables
+}
+
+const buildLatestData = (data: GqlMetricRow): MetricUpdate => {
+    return { name: data.metric, value: data.value, id: data.at }
+}
+const buildMetricUnits = (data: GqlMetricData): MetricUnits => {
+    let units: MetricUnits = {}
+    for (const metric in data) {
+        units[metric] = data[metric][0].unit
     }
-    buildVariables()
-    const res = useQuery(buildGql(), { variables: { ...buildVariables() } })
+    return units
+}
+
+const Chart: React.FC<Props> = ({ metricObjs }) => {
+    const dispatch = useDispatch()
+    const [skip, setSkip] = useState<boolean>(false)
+
+    const metrics: string[] = metricObjs.map(metric => metric.name)
+    const metricData: MetricRow[] = useSelector(getMetricData)
+
+    const sub = useSubscription(gqlSub, { skip: !skip })
+    const res = useQuery(buildGql(metrics), { variables: { ...buildVariables(metrics), skip } })
 
     useEffect(() => {
-        res.refetch()
-    }, [heartBeat])
-    useEffect(() => {
-        if (res.data) {
-            if (!loaded) {
-                loaded = true
-                dispatch(metricDataPopulated(buildMetricData(res.data)))
-                dispatch(metricUnitsAdded(buildMetricUnits(res.data)))
-            } else {
-                dispatch(metricDataUpdtated(buildLatestData(res.data)))
-            }
-
+        if (sub.data && sub.data.newMeasurement) {
+            dispatch(metricDataUpdated(buildLatestData(sub.data.newMeasurement)))
         }
-    }, [res.data])
+    }, [sub.data, sub.loading, dispatch])
+
+    useEffect(() => {
+        if (!res.loading && res.data) {
+            dispatch(metricDataPopulated(buildMetricData(res.data)))
+            dispatch(metricUnitsAdded(buildMetricUnits(res.data)))
+            setSkip(true)
+        }
+    }, [res.data, res.loading, dispatch])
 
     return (
         <ResponsiveContainer>
@@ -140,7 +123,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                 <Tooltip />
                 <Legend />
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" dot={false} dataKey={`chartData[${metric.name}]`} unit={metric.unit} stroke={metric.color} />
+                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" name={metric.name} dot={false} dataKey={`chartData[${metric.name}]`} unit={metric.unit} stroke={metric.color} />
                 ))}
             </LineChart>
         </ResponsiveContainer>
