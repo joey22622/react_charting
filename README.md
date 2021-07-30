@@ -1,5 +1,5 @@
-## Create React App Visualization
+## Dynamic Comparison Charts
 
-This assessment was bespoke handcrafted for joey.
+Stack: React, Typescript, GraphQL, Redux, MaterialUI
 
-Read more about this assessment [here](https://react.eogresources.com)
+Live Deployment: https://react-charts-22622.netlify.app/
