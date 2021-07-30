@@ -54,6 +54,8 @@ const slice = createSlice({
         }
         metrics.data.push(newRow)
       }
+      const keyIndex = metrics.keys.findIndex(key => key.name === name)
+      metrics.keys[keyIndex].latestValue = value
     },
   },
 })
