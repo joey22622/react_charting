@@ -112,14 +112,14 @@ const Data: React.FC = ({ children }) => {
         }
     }, [data])
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setHeartBeat(Date.now())
-        }, 1299)
-        return () => {
-            clearInterval(timer)
-        }
-    })
+    // useEffect(() => {
+    //     const timer = setInterval(() => {
+    //         setHeartBeat(Date.now())
+    //     }, 1299)
+    //     return () => {
+    //         clearInterval(timer)
+    //     }
+    // })
 
     return (
         <Container className={classes.content} >

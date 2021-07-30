@@ -2,9 +2,9 @@ import * as React from 'react';
 import { useEffect } from 'react';
 import { useQuery, useSubscription, gql } from '@apollo/client';
 import { LineChart, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } from 'recharts';
-import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData, ChartData } from '../interfaces'
+import { Metric, MetricRow, MetricVariable, MetricVariables, GqlMetricRow, GqlLastMetricRow, MetricUnits, GqlMetricData, ChartData, GqlSubRow, MetricUpdate } from '../interfaces'
 import { useDispatch, useSelector } from 'react-redux'
-import { getMetricData, metricDataPopulated, metricDataUpdtated, metricUnitsAdded } from '../store/metrics';
+import { getMetricData, metricDataPopulated, metricDataUpdated, metricUnitsAdded } from '../store/metrics';
 import { getUniqueId } from './functions';
 import moment from 'moment'
 
@@ -29,7 +29,25 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
             unit
         }
     }`
-    const { data, loading } = useSubscription(gqlSub);
+    const sub = useSubscription(gqlSub)
+    // @ts-ignore
+
+    // CHECK FOR NEW METRIC NAME
+    // DISPATCH NEW METRIC OBJ TO METRICS
+    // DISPATCH KEY:VALUE, ID
+
+    // REDUCER:
+    // CHECK FOR EXISTING ID
+    // IF YES: ASSIGN KEY:VALUE
+    // IF NO: BUILD NEW OBJ, ASSIGN KEY:VALUE
+
+    // DISPATCH LATEST VALUE
+
+
+
+    if (sub.data && sub.data.newMeasurement) {
+    }
+
     // GRAPHQL
     const buildGql = () => {
         let actionType = `getLastKnownMeasurement`
@@ -80,14 +98,18 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         })
         return chartData
     }
-    const buildLatestData = (data: GqlLastMetricRow,): MetricRow => {
-        let row: MetricRow = { id: 0, at: '', chartData: {} }
-        for (const metric in data) {
-            if (row.at.length <= 0) row.at = '' + moment(data[metric].at).format("h:mm")
-            if (row.id === 0) row.id = data[metric].at
-            row.chartData[metric] = data[metric].value
-        }
-        return row
+    // const buildLatestData = (data: GqlLastMetricRow,): MetricRow => {
+    //     let row: MetricRow = { id: 0, at: '', chartData: {} }
+    //     for (const metric in data) {
+    //         if (row.at.length <= 0) row.at = '' + moment(data[metric].at).format("h:mm")
+    //         if (row.id === 0) row.id = data[metric].at
+    //         row.chartData[metric] = data[metric].value
+    //     }
+    //     return row
+    // }
+    const buildLatestData = (data: GqlMetricRow): MetricUpdate => {
+        // console.log(data)
+        return { name: data.metric, value: data.value, id: data.at }
     }
     const buildMetricUnits = (data: GqlMetricData): MetricUnits => {
         let units: MetricUnits = {}
@@ -112,8 +134,15 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
         });
         return variables
     }
+
     buildVariables()
     const res = useQuery(buildGql(), { variables: { ...buildVariables() } })
+
+    if (sub.data && sub.data.newMeasurement) {
+        // console.log(buildLatestData(sub.data.newMeasurement))
+        dispatch(metricDataUpdated(buildLatestData(sub.data.newMeasurement)))
+    }
+
 
     useEffect(() => {
         res.refetch()
@@ -125,7 +154,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                 dispatch(metricDataPopulated(buildMetricData(res.data)))
                 dispatch(metricUnitsAdded(buildMetricUnits(res.data)))
             } else {
-                dispatch(metricDataUpdtated(buildLatestData(res.data)))
+                // dispatch(metricDataUpdtated(buildLatestData(res.data)))
             }
 
         }
@@ -140,7 +169,7 @@ const Chart: React.FC<Props> = ({ metricObjs, heartBeat, children }) => {
                 <Tooltip />
                 <Legend />
                 {metricObjs.filter(metric => metric.active).map((metric, i) => (
-                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" dot={false} dataKey={`chartData[${metric.name}]`} unit={metric.unit} stroke={metric.color} />
+                    <Line key={getUniqueId()} isAnimationActive={false} type="monotone" name={metric.name} dot={false} dataKey={`chartData[${metric.name}]`} unit={metric.unit} stroke={metric.color} />
                 ))}
             </LineChart>
         </ResponsiveContainer>
