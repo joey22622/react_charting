@@ -20,7 +20,7 @@ const httpLink = new HttpLink({
 });
 
 const wsLink = new WebSocketLink({
-    uri: 'ws://react.eogresources.com/graphql',
+    uri: 'wss://react.eogresources.com/graphql',
     options: {
         reconnect: true
     }
